@@ -1,0 +1,40 @@
+name: achieve75
+description: "A new Flutter app that helps complete the 75 hard challenge."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.3 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.6
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.3
+  intl: ^0.19.0
+  permission_handler: ^11.3.1
+  timezone: ^0.9.4
+
+
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+  # Add your asset paths here
+  # - images/logo.png
+  # fonts:
+  # Add any custom fonts here if needed
+  # - family: CustomFont
+  #   fonts:
+  #     - asset: fonts/CustomFont-Regular.ttf
