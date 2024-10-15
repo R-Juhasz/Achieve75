@@ -1,7 +1,9 @@
+import 'package:achieve75/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'login_screen.dart';
+import 'notification_service.dart';
+import 'package:timezone/data/latest.dart' as tz; // Importing timezone data
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +18,12 @@ void main() async {
     print("Error initializing Firebase: $e");
     return; // Exit if Firebase initialization fails
   }
+
+  // Initialize timezone data
+  tz.initializeTimeZones(); // Ensure timezone data is initialized here
+
+  // Initialize Notification Service
+  await NotificationService().init(); // Initialize NotificationService
 
   runApp(const MyApp());
 }
@@ -34,5 +42,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
 

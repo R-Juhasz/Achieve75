@@ -1,15 +1,29 @@
 import 'package:flutter/material.dart';
 import 'challenge_screen.dart'; // Import the challenge screen
-import 'main.dart'; // Import the main file to access scheduleTestNotification
+import 'notification_service.dart'; // Import NotificationService
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final NotificationService notificationService = NotificationService(); // Create an instance of NotificationService
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the notification service
+    notificationService.init();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('75 Hard Challenge'),
+        title: const Text('75 Hard Challenge'),
       ),
       body: Center(
         child: Column(
@@ -19,18 +33,18 @@ class HomeScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ChallengeScreen()),
+                  MaterialPageRoute(builder: (context) => const ChallengeScreen()),
                 );
               },
-              child: Text('Start Challenge'),
+              child: const Text('Start Challenge'),
             ),
-            SizedBox(height: 20), // Add some space between buttons
+            const SizedBox(height: 20), // Add some space between buttons
             ElevatedButton(
-              onPressed: () {
-                // Call to schedule a test notification (update if necessary)
-                // scheduleTestNotification();
+              onPressed: () async {
+                // Show a basic notification for testing
+                await notificationService.showBasicNotification(); // Call the method from NotificationService
               },
-              child: Text('Schedule Test Notification'),
+              child: const Text('Show Basic Notification'),
             ),
           ],
         ),
@@ -38,3 +52,5 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+
+
