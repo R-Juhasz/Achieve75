@@ -1,0 +1,192 @@
+import 'dart:async';
+import 'package:achieve75/screens/home_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
+
+class Hard75Slideshow extends StatefulWidget {
+  const Hard75Slideshow({Key? key}) : super(key: key);
+
+  @override
+  _Hard75SlideshowState createState() => _Hard75SlideshowState();
+}
+
+class _Hard75SlideshowState extends State<Hard75Slideshow> {
+  final PageController _pageController = PageController();
+  late Timer _timer;
+  int _currentPage = 0;
+
+  final List<Map<String, dynamic>> goals = [
+    {
+      'title': 'Goal 1: Two Workouts a Day',
+      'description': 'Complete two 45-minute workouts a day, one of which must be outdoors.',
+      'icon': Icons.fitness_center,
+    },
+    {
+      'title': 'Goal 2: Drink a Gallon of Water',
+      'description': 'Drink 1 gallon of water every day to stay hydrated.',
+      'icon': Icons.local_drink,
+    },
+    {
+      'title': 'Goal 3: Follow a Diet',
+      'description': 'Stick to a diet plan of your choice. No cheat meals or alcohol allowed.',
+      'icon': Icons.no_meals,
+    },
+    {
+      'title': 'Goal 4: Read 10 Pages',
+      'description': 'Read at least 10 pages of a non-fiction or self-development book every day.',
+      'icon': Icons.book,
+    },
+    {
+      'title': 'Goal 5: Take a Progress Picture',
+      'description': 'Take a progress photo every day to track your fitness journey.',
+      'icon': Icons.camera_alt,
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _startAutoSlideShow();
+  }
+
+  void _startAutoSlideShow() {
+    _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
+      if (_currentPage < goals.length - 1) {
+        _currentPage++;
+      } else {
+        _currentPage = 0;
+      }
+
+      _pageController.animateToPage(
+        _currentPage,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: const Text('75 Hard Challenge Goals', style: TextStyle(color: Colors.blue)),
+        elevation: 0,
+      ),
+      body: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: goals.length,
+            onPageChanged: (int page) {
+              setState(() {
+                _currentPage = page;
+              });
+            },
+            itemBuilder: (context, index) {
+              return GoalSlide(
+                title: goals[index]['title']!,
+                description: goals[index]['description']!,
+                icon: goals[index]['icon']!,
+              );
+            },
+          ),
+          Positioned(
+            bottom: 100,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  minimumSize: const Size(150, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HomeScreen(),
+                    ),
+                  );
+                },
+                child: const Text('Continue', style: TextStyle(color: Colors.white, fontSize: 16)),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 40,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: SmoothPageIndicator(
+                controller: _pageController,
+                count: goals.length,
+                effect: ExpandingDotsEffect(
+                  dotWidth: 10,
+                  dotHeight: 10,
+                  activeDotColor: Colors.blue,
+                  dotColor: Colors.grey.shade700,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class GoalSlide extends StatelessWidget {
+  final String title;
+  final String description;
+  final IconData icon;
+
+  const GoalSlide({
+    Key? key,
+    required this.title,
+    required this.description,
+    required this.icon,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: 100,
+            color: Colors.blue,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            description,
+            style: const TextStyle(fontSize: 18, color: Colors.white70),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}

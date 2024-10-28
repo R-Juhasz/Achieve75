@@ -1,0 +1,45 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+    id "com.google.gms.google-services" // Flutter plugin should be after Android and Kotlin plugins
+}
+
+android {
+    namespace = "com.example.achieve_seventy_five"
+    compileSdk = 34
+
+    compileOptions {
+        sourceCompatibility 17
+        targetCompatibility 17
+        coreLibraryDesugaringEnabled true // Enables Java 8+ APIs for lower Android versions
+    }
+
+    kotlinOptions {
+        jvmTarget = "17" // Ensure it matches the version you’re targeting
+    }
+
+    defaultConfig {
+        applicationId = "com.example.achieve_seventy_five" // Use your own app ID
+        minSdk = 26
+        targetSdk = 34
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.debug // Replace with release signing config as needed
+        }
+    }
+}
+
+dependencies {
+    // Add the desugaring library for Java 8+ features
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.2'
+}
+
+flutter {
+    source = "../.."
+}
+

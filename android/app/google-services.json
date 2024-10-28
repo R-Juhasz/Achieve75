@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "985991997427",
+    "project_id": "achieve75-6f726",
+    "storage_bucket": "achieve75-6f726.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:985991997427:android:4f8a87863b1f0091c05486",
+        "android_client_info": {
+          "package_name": "com.juhaszweb.achieve75"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3rwGJRF_HydP0jMuhYPPRATdyX6axD2o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
