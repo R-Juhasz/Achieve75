@@ -1,4 +1,4 @@
-package com.example.achieve_seventy_five;
+package com.juhaszweb.achieve75;
 
 import io.flutter.embedding.android.FlutterActivity;
 

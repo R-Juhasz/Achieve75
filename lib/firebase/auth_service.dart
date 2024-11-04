@@ -7,8 +7,11 @@ class AuthService {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(email: email, password: password);
       return result.user;
+    } on FirebaseAuthException catch (e) {
+      print("Sign-in error: ${e.message}");
+      return null;
     } catch (e) {
-      print(e.toString());
+      print("General error: ${e.toString()}");
       return null;
     }
   }
@@ -17,17 +20,30 @@ class AuthService {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(email: email, password: password);
       return result.user;
+    } on FirebaseAuthException catch (e) {
+      print("Registration error: ${e.message}");
+      return null;
     } catch (e) {
-      print(e.toString());
+      print("General error: ${e.toString()}");
       return null;
     }
   }
 
   Future<void> signOut() async {
-    await _auth.signOut();
+    try {
+      await _auth.signOut();
+      print("User signed out");
+    } catch (e) {
+      print("Sign-out error: ${e.toString()}");
+    }
   }
 
   Future<void> resetPassword(String email) async {
-    await _auth.sendPasswordResetEmail(email: email);
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      print("Password reset email sent to $email");
+    } catch (e) {
+      print("Password reset error: ${e.toString()}");
+    }
   }
 }

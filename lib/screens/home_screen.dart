@@ -3,6 +3,9 @@ import 'bulletin_board_screen.dart';
 import 'challenge_screen.dart';
 import 'picture_library_screen.dart';
 import 'weight_tracker_screen.dart';
+import 'profile_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,6 +15,38 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  File? _profileImage;
+  String _username = "User"; // Default username
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileImage();
+    _loadUsername();
+  }
+
+  // Load the profile image from SharedPreferences
+  Future<void> _loadProfileImage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? imagePath = prefs.getString('profileImagePath');
+    if (imagePath != null) {
+      setState(() {
+        _profileImage = File(imagePath);
+      });
+    }
+  }
+
+  // Load the username from SharedPreferences
+  Future<void> _loadUsername() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? username = prefs.getString('username');
+    if (username != null) {
+      setState(() {
+        _username = username;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,14 +58,42 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         backgroundColor: Colors.black,
         elevation: 0,
+        leading: GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ProfileScreen()),
+            ).then((_) {
+              _loadProfileImage(); // Reload image after returning from profile screen
+              _loadUsername(); // Reload username
+            });
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CircleAvatar(
+              backgroundImage:
+              _profileImage != null ? FileImage(_profileImage!) : null,
+              child: _profileImage == null
+                  ? const Icon(Icons.person, color: Colors.white)
+                  : null,
+              backgroundColor: Colors.blue, // Color when no profile image
+            ),
+          ),
+        ),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Text(
+              _username,
+              style: const TextStyle(color: Colors.white, fontSize: 24),
+            ),
+            const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white, backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.blue,
                 minimumSize: const Size(200, 50),
               ),
               onPressed: () {
@@ -44,7 +107,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white, backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.blue,
                 minimumSize: const Size(200, 50),
               ),
               onPressed: () {
@@ -58,7 +122,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white, backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.blue,
                 minimumSize: const Size(200, 50),
               ),
               onPressed: () {
@@ -72,7 +137,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white, backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.blue,
                 minimumSize: const Size(200, 50),
               ),
               onPressed: () {

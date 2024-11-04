@@ -1,182 +1,208 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BulletinBoardScreen extends StatefulWidget {
+  const BulletinBoardScreen({super.key});
+
   @override
   _BulletinBoardScreenState createState() => _BulletinBoardScreenState();
 }
 
 class _BulletinBoardScreenState extends State<BulletinBoardScreen> {
   final TextEditingController _commentController = TextEditingController();
-  final ImagePicker _picker = ImagePicker();
   File? _imageFile;
+  final ImagePicker _picker = ImagePicker();
+  bool _isUploading = false;
+  String _username = 'Anonymous';
+  String? _profileImagePath;
 
-  // Add new post to Firestore
-  Future<void> _addPost() async {
-    String? imageUrl;
+  @override
+  void initState() {
+    super.initState();
+    _loadUserPreferences();
+  }
 
-    // If an image is picked, upload it to Firestore Storage and get the URL
-    if (_imageFile != null) {
-      try {
-        // Confirm the file exists
-        if (await _imageFile!.exists()) {
-          print("Image file exists. Starting upload...");
-
-          // Firebase Storage upload
-          final storageRef = FirebaseStorage.instance
-              .ref()
-              .child('bulletinBoardImages/${DateTime.now().millisecondsSinceEpoch}');
-          UploadTask uploadTask = storageRef.putFile(_imageFile!);
-
-          // Monitor task status
-          uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-            print('Upload progress: ${snapshot.bytesTransferred} / ${snapshot.totalBytes}');
-          }, onError: (e) {
-            print("Upload error: $e");
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Error during upload: $e")),
-            );
-          });
-
-          // Wait for the upload to complete
-          TaskSnapshot taskSnapshot = await uploadTask;
-
-          // Confirm upload success and get URL
-          if (taskSnapshot.state == TaskState.success) {
-            imageUrl = await taskSnapshot.ref.getDownloadURL();
-            print("Image uploaded successfully: $imageUrl");
-          } else {
-            print("Image upload failed with state: ${taskSnapshot.state}");
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Failed to upload image")),
-            );
-            return; // Exit if upload fails
-          }
-        } else {
-          print("Selected image file does not exist");
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Selected image file does not exist")),
-          );
-          return;
-        }
-      } catch (e) {
-        print("Error uploading image: $e");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error uploading image: $e")),
-        );
-        return;
-      }
-    }
-
-    // Add the comment and image URL to Firestore
-    try {
-      await FirebaseFirestore.instance.collection('bulletinBoardPosts').add({
-        'username': 'User', // Replace with actual username
-        'comment': _commentController.text,
-        'timestamp': FieldValue.serverTimestamp(),
-        'imageUrl': imageUrl,
-      });
-      print("Post added successfully");
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Post added successfully!")),
-      );
-    } catch (e) {
-      print("Error adding post: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error adding post: $e")),
-      );
-    }
-
-    _commentController.clear();
+  Future<void> _loadUserPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      _imageFile = null;
+      _username = prefs.getString('username') ?? 'Anonymous';
+      _profileImagePath = prefs.getString('profileImagePath'); // Load profile image path
     });
   }
 
-  // Pick an image from the gallery
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path); // Store the selected image file
-      });
-      print("Picked image: ${_imageFile!.path}"); // Log the picked image path
-    } else {
-      print("No image selected");
-    }
+  Future<void> _saveProfileImagePath(String imagePath) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('profileImagePath', imagePath);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Bulletin Board')),
+      appBar: AppBar(
+        title: const Text('Bulletin Board'),
+      ),
       body: Column(
         children: [
+          Expanded(child: _buildPostList()),
+          _buildInputSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputSection() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.image),
+            onPressed: _pickImage,
+          ),
           Expanded(
-            child: StreamBuilder(
-              stream: FirebaseFirestore.instance
-                  .collection('bulletinBoardPosts')
-                  .orderBy('timestamp', descending: true)
-                  .snapshots(),
-              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                if (!snapshot.hasData) return const CircularProgressIndicator();
-                return ListView(
-                  children: snapshot.data!.docs.map((doc) {
-                    return ListTile(
-                      title: Text(doc['username']),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(doc['comment']),
-                          if (doc['imageUrl'] != null && doc['imageUrl'].isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Image.network(doc['imageUrl'], height: 100),
-                            ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                );
-              },
+            child: TextField(
+              controller: _commentController,
+              decoration: const InputDecoration(
+                hintText: 'Enter your comment',
+                border: OutlineInputBorder(),
+              ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                TextField(
-                  controller: _commentController,
-                  decoration: const InputDecoration(labelText: 'Add a comment'),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ElevatedButton(
-                      onPressed: _pickImage,
-                      child: const Text('Upload Image'),
-                    ),
-                    ElevatedButton(
-                      onPressed: _addPost,
-                      child: const Text('Post'),
-                    ),
-                  ],
-                ),
-                if (_imageFile != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Image.file(_imageFile!, height: 100),
-                  ),
-              ],
-            ),
+          IconButton(
+            icon: const Icon(Icons.send),
+            onPressed: _addPost,
           ),
         ],
       ),
     );
   }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+
+      // Save the image path in SharedPreferences
+      _saveProfileImagePath(pickedFile.path);
+    }
+  }
+
+  Future<void> _addPost() async {
+    if (_commentController.text.trim().isNotEmpty || _imageFile != null) {
+      String imageUrl = '';
+
+      try {
+        setState(() {
+          _isUploading = true;
+        });
+
+        // Add post to Firestore
+        await FirebaseFirestore.instance.collection('posts').add({
+          'username': _username,
+          'comment': _commentController.text,
+          'imageUrl': _imageFile != null ? _imageFile!.path : '', // Store local image path
+          'timestamp': FieldValue.serverTimestamp(),
+          'profileImagePath': _profileImagePath ?? '', // Use local profile image path
+        });
+
+        _commentController.clear();
+        setState(() {
+          _imageFile = null;
+        });
+        FocusScope.of(context).unfocus();
+
+      } catch (e) {
+        print('Error adding post: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error adding post: $e')),
+        );
+      } finally {
+        setState(() {
+          _isUploading = false;
+        });
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a comment or select an image.')),
+      );
+    }
+  }
+
+  Widget _buildPostList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('posts') // Update with your actual collection name
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No posts available.'));
+        }
+
+        final posts = snapshot.data!.docs;
+        return ListView.builder(
+          itemCount: posts.length,
+          itemBuilder: (context, index) {
+            final post = posts[index];
+            return _buildPostItem(post);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPostItem(DocumentSnapshot post) {
+    return ListTile(
+      leading: post['profileImagePath'] != null && post['profileImagePath'].isNotEmpty
+          ? CircleAvatar(
+        backgroundImage: FileImage(File(post['profileImagePath'])), // Display the local image
+      )
+          : const CircleAvatar(
+        child: Icon(Icons.person),
+      ),
+      title: Text(post['username']),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(post['comment']),
+          if (post['imageUrl'] != null && post['imageUrl'].isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Image.file(File(post['imageUrl'])), // Display the local image
+            ),
+        ],
+      ),
+      trailing: _username == post['username']
+          ? IconButton(
+        icon: const Icon(Icons.delete),
+        onPressed: () => _deletePost(post.id),
+      )
+          : null,
+    );
+  }
+
+  Future<void> _deletePost(String postId) async {
+    try {
+      await FirebaseFirestore.instance.collection('posts').doc(postId).delete(); // Ensure correct collection name
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Post deleted successfully.')),
+      );
+    } catch (e) {
+      print('Error deleting post: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting post: $e')),
+      );
+    }
+  }
 }
+

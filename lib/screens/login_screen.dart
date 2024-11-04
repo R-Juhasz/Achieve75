@@ -1,4 +1,5 @@
 import 'package:achieve75/extras/hard75_slideshow.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../firebase/auth_service.dart';
@@ -28,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: Colors.black,
         elevation: 0,
       ),
-      body: SingleChildScrollView( // Add SingleChildScrollView here
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -98,6 +99,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   if (_isLogin) {
                     User? user = await _authService.signIn(email, password);
                     if (user != null) {
+                      print("User is logged in: ${user.uid}");
+
+                      // Check user authentication state
+                      final currentUser = FirebaseAuth.instance.currentUser;
+                      if (currentUser != null) {
+                        print("User is authenticated, proceeding to Firestore access.");
+                        await Future.delayed(const Duration(seconds: 1)); // Ensure complete authentication
+                        await testFirestoreAccess();
+                      } else {
+                        print("User is not authenticated.");
+                      }
+
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
@@ -109,6 +122,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   } else {
                     User? user = await _authService.register(email, password);
                     if (user != null) {
+                      print("User registered: ${user.uid}");
+
+                      // Check user authentication state
+                      final currentUser = FirebaseAuth.instance.currentUser;
+                      if (currentUser != null) {
+                        print("User is authenticated, proceeding to Firestore access.");
+                        await Future.delayed(const Duration(seconds: 1)); // Ensure complete authentication
+                        await testFirestoreAccess();
+                      } else {
+                        print("User is not authenticated.");
+                      }
+
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
@@ -143,5 +168,21 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  // Function to test Firestore access
+  Future<void> testFirestoreAccess() async {
+    try {
+      var snapshot = await FirebaseFirestore.instance.collection('posts').get();
+      if (snapshot.docs.isEmpty) {
+        print("No documents found in 'posts' collection.");
+      } else {
+        for (var doc in snapshot.docs) {
+          print("Document data: ${doc.data()}");
+        }
+      }
+    } catch (e) {
+      print("Error accessing Firestore: $e");
+    }
   }
 }
