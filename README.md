@@ -1,4 +1,8 @@
-Achieve Seventy-Five
+CURRENTLY FLESHING UI MORE UPDATES TO COME IN THE NEXT FEW DAYS THEN PREP FOR RELEASE TO GOOGLE PLAY
+
+
+
+Achieve75
 I am currently developing a new Flutter project called "Achieve Seventy-Five," which is designed to support individuals undertaking the Hard 75 challenge. This application will serve as a comprehensive tool to help users successfully complete the challenge by offering a range of features aimed at enhancing motivation and accountability.
 
 One of the key aspects of the app is its regular notifications, which will provide users with moral support and encouragement throughout their journey. These notifications will remind users of their goals, celebrate their achievements, and offer motivational messages to keep them focused and engaged.
@@ -7,7 +11,7 @@ In addition to the support notifications, the app will include personalized alar
 
 As the project evolves, I plan to introduce even more features to enhance the user experience. These may include progress tracking, community support options, and tailored recommendations based on individual performance.
 
-Overall, "Achieve Seventy-Five" aims to empower users to not only complete the Hard 75 challenge but also to cultivate lasting habits that promote a healthier and more fulfilling lifestyle.
+Overall, Achieve75 aims to empower users to not only complete the Hard 75 challenge but also to cultivate lasting habits that promote a healthier and more fulfilling lifestyle.
 
 ![Screenshot_20241105_120439](https://github.com/user-attachments/assets/e1d3f794-9380-4df5-9023-6fa6041c479d)
 ![goal1](https://github.com/user-attachments/assets/3c1403f5-5ddb-422c-97f2-871244cee574)
