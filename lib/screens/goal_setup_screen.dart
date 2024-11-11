@@ -23,6 +23,30 @@ class _GoalSetupScreenState extends State<GoalSetupScreen> {
   final ImagePicker _picker = ImagePicker();
 
   @override
+  void initState() {
+    super.initState();
+    _loadGoals(); // Load goals when the screen is initialized
+  }
+
+  Future<void> _loadGoals() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Load the saved goals for the specific day
+    List<String>? savedGoals = prefs.getStringList('goals_day_${widget.day}');
+    if (savedGoals != null) {
+      setState(() {
+        _goalsCompleted = savedGoals.map((goal) => goal == 'true').toList();
+      });
+    }
+  }
+
+  Future<void> _saveGoals() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Save the goals state for the specific day
+    List<String> goalsToSave = _goalsCompleted.map((goal) => goal.toString()).toList();
+    await prefs.setStringList('goals_day_${widget.day}', goalsToSave);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
@@ -93,7 +117,8 @@ class _GoalSetupScreenState extends State<GoalSetupScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 60),
             ),
-            onPressed: () {
+            onPressed: () async {
+              await _saveGoals(); // Save goals when pressed
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -113,7 +138,8 @@ class _GoalSetupScreenState extends State<GoalSetupScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 60),
             ),
-            onPressed: () {
+            onPressed: () async {
+              await _saveGoals(); // Save goals when pressed
               Navigator.pop(context);
             },
             child: const Text(
@@ -204,5 +230,3 @@ class _GoalSetupScreenState extends State<GoalSetupScreen> {
     );
   }
 }
-
-

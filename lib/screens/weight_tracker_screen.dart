@@ -106,3 +106,4 @@ class _WeightTrackerScreenState extends State<WeightTrackerScreen> {
     );
   }
 }
+

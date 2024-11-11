@@ -16,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLogin = true;
+  bool _isLoading = false; // Loading state variable
 
   @override
   Widget build(BuildContext context) {
@@ -93,58 +94,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   padding: const EdgeInsets.symmetric(
                       vertical: 15, horizontal: 60),
                 ),
-                onPressed: () async {
-                  String email = _emailController.text;
-                  String password = _passwordController.text;
-                  if (_isLogin) {
-                    User? user = await _authService.signIn(email, password);
-                    if (user != null) {
-                      print("User is logged in: ${user.uid}");
-
-                      // Check user authentication state
-                      final currentUser = FirebaseAuth.instance.currentUser;
-                      if (currentUser != null) {
-                        print("User is authenticated, proceeding to Firestore access.");
-                        await Future.delayed(const Duration(seconds: 1)); // Ensure complete authentication
-                        await testFirestoreAccess();
-                      } else {
-                        print("User is not authenticated.");
-                      }
-
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => Hard75Slideshow()),
-                      );
-                    } else {
-                      print("Login Failed");
-                    }
-                  } else {
-                    User? user = await _authService.register(email, password);
-                    if (user != null) {
-                      print("User registered: ${user.uid}");
-
-                      // Check user authentication state
-                      final currentUser = FirebaseAuth.instance.currentUser;
-                      if (currentUser != null) {
-                        print("User is authenticated, proceeding to Firestore access.");
-                        await Future.delayed(const Duration(seconds: 1)); // Ensure complete authentication
-                        await testFirestoreAccess();
-                      } else {
-                        print("User is not authenticated.");
-                      }
-
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => Hard75Slideshow()),
-                      );
-                    } else {
-                      print("Registration Failed");
-                    }
-                  }
-                },
-                child: Text(
+                onPressed: _isLoading ? null : _handleAuth, // Disable button if loading
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white) // Show loading indicator
+                    : Text(
                   _isLogin ? 'Login' : 'Register',
                   style: const TextStyle(color: Colors.white, fontSize: 16),
                 ),
@@ -168,6 +121,49 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  // Function to handle authentication
+  Future<void> _handleAuth() async {
+    String email = _emailController.text;
+    String password = _passwordController.text;
+
+    setState(() {
+      _isLoading = true; // Start loading
+    });
+
+    try {
+      if (_isLogin) {
+        User? user = await _authService.signIn(email, password);
+        if (user != null) {
+          print("User is logged in: ${user.uid}");
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => Hard75Slideshow()),
+          );
+        } else {
+          print("Login Failed");
+        }
+      } else {
+        User? user = await _authService.register(email, password);
+        if (user != null) {
+          print("User registered: ${user.uid}");
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => Hard75Slideshow()),
+          );
+        } else {
+          print("Registration Failed");
+        }
+      }
+    } catch (e) {
+      print("Error: $e");
+      // Handle error (e.g., show a SnackBar)
+    } finally {
+      setState(() {
+        _isLoading = false; // Stop loading
+      });
+    }
   }
 
   // Function to test Firestore access
