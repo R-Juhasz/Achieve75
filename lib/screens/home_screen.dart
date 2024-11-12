@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'bulletin_board_screen.dart';
 import 'challenge_screen.dart';
 import 'picture_library_screen.dart';
 import 'weight_tracker_screen.dart';
 import 'profile_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io';
+import 'login_screen.dart'; // Import your login screen here
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -47,6 +50,15 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Sign out the user
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()), // Navigate to login screen
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,8 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: CircleAvatar(
-              backgroundImage:
-              _profileImage != null ? FileImage(_profileImage!) : null,
+              backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
               child: _profileImage == null
                   ? const Icon(Icons.person, color: Colors.white)
                   : null,
@@ -152,6 +163,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+      floatingActionButton: Align(
+        alignment: Alignment.bottomLeft,
+        child: FloatingActionButton(
+          onPressed: _signOut,
+          backgroundColor: Colors.red,
+          child: const Icon(Icons.logout),
+          tooltip: 'Sign Out',
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
     );
   }
 }

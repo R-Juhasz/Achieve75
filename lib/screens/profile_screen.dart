@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'home_screen.dart';
+
 class ProfileScreen extends StatefulWidget {
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
@@ -12,8 +14,10 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passcodeController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   File? _profileImage;
+  String? _savedPasscode;
 
   @override
   void initState() {
@@ -21,11 +25,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadProfile();
   }
 
-  // Load saved profile information
+  // Load saved profile information and passcode
   Future<void> _loadProfile() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? savedUsername = prefs.getString('username');
     String? savedImagePath = prefs.getString('profileImagePath');
+    _savedPasscode = prefs.getString('userPasscode');
 
     if (savedUsername != null) {
       _usernameController.text = savedUsername;
@@ -60,10 +65,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return null; // Return null if no image to upload
   }
 
-  // Save profile information
+  // Save profile information and passcode
   Future<void> _saveProfile() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('username', _usernameController.text);
+
+    // Save the passcode if set
+    if (_passcodeController.text.length == 4) {
+      await prefs.setString('userPasscode', _passcodeController.text);
+      _savedPasscode = _passcodeController.text;
+    }
 
     // Upload image and get URL
     String? imageUrl = await _uploadProfileImage();
@@ -82,6 +93,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Profile updated successfully!")),
     );
+
+    // Navigate to the HomeScreen after saving the profile
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    );
   }
 
   // Pick an image from the gallery
@@ -95,6 +112,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('profileImagePath', pickedFile.path);
     }
+  }
+
+  // Widget for passcode setup or change
+  Widget _buildPasscodeField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: _passcodeController,
+          obscureText: true,
+          keyboardType: TextInputType.number,
+          maxLength: 4,
+          decoration: InputDecoration(
+            labelText: _savedPasscode == null ? 'Set 4-digit Passcode' : 'Change 4-digit Passcode',
+          ),
+        ),
+        if (_savedPasscode != null)
+          Text(
+            'Enter a new passcode to change the current one.',
+            style: TextStyle(color: Colors.grey),
+          ),
+      ],
+    );
   }
 
   @override
@@ -123,6 +163,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               decoration: const InputDecoration(labelText: 'Username'),
             ),
             const SizedBox(height: 16),
+            _buildPasscodeField(),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _saveProfile,
               child: const Text('Save Profile'),
@@ -133,4 +175,3 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-

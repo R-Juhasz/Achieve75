@@ -37,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                _isLogin ? 'Welcome Back!' : 'Create an Account',
+                _isLogin ? 'Welcome!' : 'Create an Account',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 24,

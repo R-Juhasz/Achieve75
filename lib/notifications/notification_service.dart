@@ -5,34 +5,34 @@ import 'package:timezone/data/latest.dart' as tz;
 class NotificationService {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
+  // Initialize the notification service
   Future<void> init() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
-    AndroidInitializationSettings('@mipmap/ic_launcher'); // Default app icon
+    AndroidInitializationSettings('@mipmap/ic_launcher');
 
     final InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
-      iOS: null, // Add iOS settings if necessary
+      iOS: null,
     );
 
-    // Initialize notification plugin
     await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
     );
 
-    // Initialize timezone data
     tz.initializeTimeZones();
 
-    // Create notification channel
     await createNotificationChannel();
   }
 
   Future<void> createNotificationChannel() async {
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'channel_01', // Channel ID
-      'channel_01', // Channel Name
-      description: 'Your channel description',
+      'alarm_channel_id',
+      'Alarm Notifications',
+      description: 'Your alarm channel for notifications',
       importance: Importance.max,
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('alarm_sound'),
     );
 
     await flutterLocalNotificationsPlugin
@@ -56,44 +56,7 @@ class NotificationService {
     }
   }
 
-  // Handle notification click
-  void onDidReceiveNotificationResponse(NotificationResponse notificationResponse) {
-    final String? payload = notificationResponse.payload;
-    if (payload != null) {
-      print('Notification payload: $payload');
-      // Handle the notification tap action here
-    } else {
-      print("Notification tapped with no payload.");
-    }
-  }
-
-  // Basic notification for testing with a 10-second delay
-  Future<void> showBasicNotification() async {
-    await requestPermissions(); // Ensure permissions are granted
-
-    // Add a delay of 10 seconds
-    await Future.delayed(const Duration(seconds: 10));
-
-    var androidDetails = AndroidNotificationDetails(
-      'channel_01',
-      'channel_01', // Ensure this matches
-      importance: Importance.max,
-      priority: Priority.high,
-      playSound: true, // Play sound
-    );
-
-    var platformDetails = NotificationDetails(android: androidDetails);
-
-    try {
-      await flutterLocalNotificationsPlugin.show(
-        0, // Notification ID
-        'Basic Test Notification',
-        'This notification appears after a 10-second delay!',
-        platformDetails,
-      );
-      print("Basic notification shown after 10 seconds delay!");
-    } catch (e) {
-      print("Error showing notification: $e");
-    }
+  void onDidReceiveNotificationResponse(NotificationResponse response) {
+    print("Notification tapped: ${response.payload}");
   }
 }

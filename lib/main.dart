@@ -54,7 +54,7 @@ Future<void> _initializeFirebase() async {
 
 Future<void> _initializeNotifications() async {
   const AndroidInitializationSettings initializationSettingsAndroid =
-  AndroidInitializationSettings('@mipmap/ic_launcher'); // Adjust icon if needed
+  AndroidInitializationSettings('@mipmap/ic_launcher');
   final InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid,
   );
@@ -77,18 +77,16 @@ Future<void> _initializeAlarmManager() async {
 }
 
 void _registerIsolate() {
-  // Unregister any existing isolate to avoid duplication
   IsolateNameServer.removePortNameMapping(isolateName);
   IsolateNameServer.registerPortWithName(port.sendPort, isolateName);
+  print("Isolate registered for background tasks.");
 }
 
 Future<void> _requestPermissions() async {
-  // Request notification permission
   if (await Permission.notification.isDenied) {
     await Permission.notification.request();
   }
 
-  // Request exact alarm permission (only necessary if targeting Android 12 or higher)
   if (await Permission.scheduleExactAlarm.isDenied) {
     await Permission.scheduleExactAlarm.request();
   }

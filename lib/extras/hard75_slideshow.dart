@@ -1,8 +1,9 @@
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:achieve75/screens/home_screen.dart';
+import 'package:achieve75/screens/profile_screen.dart'; // Import the Profile screen
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-
 
 class Hard75Slideshow extends StatefulWidget {
   const Hard75Slideshow({Key? key}) : super(key: key);
@@ -66,6 +67,28 @@ class _Hard75SlideshowState extends State<Hard75Slideshow> {
     });
   }
 
+  Future<void> _onContinuePressed() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isFirstLogin = prefs.getBool('isFirstLogin') ?? true;
+
+    if (isFirstLogin) {
+      await prefs.setBool('isFirstLogin', false); // Set it to false after first login
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileScreen(),
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _timer.cancel();
@@ -113,14 +136,7 @@ class _Hard75SlideshowState extends State<Hard75Slideshow> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const HomeScreen(),
-                    ),
-                  );
-                },
+                onPressed: _onContinuePressed,
                 child: const Text('Continue', style: TextStyle(color: Colors.white, fontSize: 16)),
               ),
             ),

@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
@@ -28,22 +29,28 @@ class _AlarmPageState extends State<AlarmPage> {
   }
 
   Future<void> _initializeAlarmSettings() async {
+    developer.log('Initializing alarm settings');
     await _checkExactAlarmPermission();
     await _checkNotificationPermission();
   }
 
   Future<void> _checkExactAlarmPermission() async {
     _exactAlarmPermissionStatus = await Permission.scheduleExactAlarm.status;
+    developer.log('Exact Alarm Permission Status: $_exactAlarmPermissionStatus');
     setState(() {});
   }
 
   Future<void> _checkNotificationPermission() async {
     if (await Permission.notification.isDenied) {
+      developer.log('Notification permission denied, requesting...');
       await Permission.notification.request();
+    } else {
+      developer.log('Notification permission granted');
     }
   }
 
   Future<void> _setAlarm(TimeOfDay time) async {
+    developer.log('Setting alarm for ${time.format(context)}');
     final now = DateTime.now();
     final alarmTime = DateTime(now.year, now.month, now.day, time.hour, time.minute);
     final durationUntilAlarm = alarmTime.isAfter(now)
@@ -64,6 +71,8 @@ class _AlarmPageState extends State<AlarmPage> {
       wakeup: true,
     );
 
+    developer.log('Alarm set with ID: $alarmId, Duration: $durationUntilAlarm');
+
     await prefs?.setString(alarmTimeKey, '${time.hour}:${time.minute}');
     setState(() {
       _selectedTime = time;
@@ -72,27 +81,34 @@ class _AlarmPageState extends State<AlarmPage> {
 
   @pragma('vm:entry-point')
   static Future<void> _alarmCallback() async {
-    developer.log('Alarm fired!');
+    developer.log('Alarm fired! Executing callback.');
 
-    const androidNotificationDetails = AndroidNotificationDetails(
+    var androidNotificationDetails = AndroidNotificationDetails(
       'alarm_channel_id',
       'Alarm Notifications',
       channelDescription: 'Channel for alarm notifications',
       importance: Importance.high,
       priority: Priority.high,
-      playSound: true, // Ensure sound plays
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('alarm_sound'),
+      enableVibration: true,
+      vibrationPattern: Int64List.fromList([0, 1000, 500, 1000]),
     );
-    const notificationDetails = NotificationDetails(android: androidNotificationDetails);
+
+    var notificationDetails = NotificationDetails(android: androidNotificationDetails);
 
     await flutterLocalNotificationsPlugin.show(
       0,
-      'Alarm: ${currentAlarmLabel ?? "Workout"}', // Use the stored label
+      'Alarm: ${currentAlarmLabel ?? "Workout"}',
       "It's time for your goal!",
       notificationDetails,
     );
+
+    developer.log('Notification displayed with sound for alarm label: ${currentAlarmLabel}');
   }
 
   Future<void> _selectTime(BuildContext context) async {
+    developer.log('Opening time picker');
     final picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime ?? TimeOfDay.now(),
@@ -120,6 +136,7 @@ class _AlarmPageState extends State<AlarmPage> {
             ElevatedButton(
               onPressed: () async {
                 if (_exactAlarmPermissionStatus.isDenied) {
+                  developer.log('Exact Alarm Permission denied, requesting...');
                   await Permission.scheduleExactAlarm.request();
                   _checkExactAlarmPermission();
                 } else {
