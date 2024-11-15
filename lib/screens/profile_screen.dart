@@ -2,22 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../extras/drawer_menu.dart';
 import 'home_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
+  static const String routeName = '/profile';
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passcodeController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   File? _profileImage;
-  String? _savedPasscode;
 
   @override
   void initState() {
@@ -25,12 +23,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadProfile();
   }
 
-  // Load saved profile information and passcode
+  // Load saved profile information
   Future<void> _loadProfile() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? savedUsername = prefs.getString('username');
     String? savedImagePath = prefs.getString('profileImagePath');
-    _savedPasscode = prefs.getString('userPasscode');
 
     if (savedUsername != null) {
       _usernameController.text = savedUsername;
@@ -42,105 +39,91 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Upload profile image to Firebase Storage
-  Future<String?> _uploadProfileImage() async {
-    if (_profileImage != null) {
-      try {
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('profileImages/${DateTime.now().millisecondsSinceEpoch}');
-        UploadTask uploadTask = storageRef.putFile(_profileImage!);
-        TaskSnapshot taskSnapshot = await uploadTask;
-
-        if (taskSnapshot.state == TaskState.success) {
-          return await taskSnapshot.ref.getDownloadURL();
-        }
-      } catch (e) {
-        print("Error uploading profile image: $e");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error uploading profile image: $e")),
-        );
-      }
-    }
-    return null; // Return null if no image to upload
-  }
-
-  // Save profile information and passcode
+  // Save profile information and image path locally
   Future<void> _saveProfile() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('username', _usernameController.text);
 
-    // Save the passcode if set
-    if (_passcodeController.text.length == 4) {
-      await prefs.setString('userPasscode', _passcodeController.text);
-      _savedPasscode = _passcodeController.text;
-    }
-
-    // Upload image and get URL
-    String? imageUrl = await _uploadProfileImage();
-    if (imageUrl != null) {
-      // Store image URL in Firestore
-      String userId = "user_${prefs.getString('userId') ?? "defaultId"}"; // Ensure you have a unique user ID
-      await FirebaseFirestore.instance.collection('users').doc(userId).set({
-        'username': _usernameController.text,
-        'profileImageUrl': imageUrl,
-      }, SetOptions(merge: true)); // Use merge to prevent overwriting other fields
-
-      // Save the local image path to SharedPreferences
+    // Save image path in SharedPreferences
+    if (_profileImage != null) {
       await prefs.setString('profileImagePath', _profileImage!.path);
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Profile updated successfully!")),
-    );
-
-    // Navigate to the HomeScreen after saving the profile
+    // Redirect to HomeScreen and reload profile data
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      MaterialPageRoute(
+        builder: (context) => const HomeScreen(),
+      ),
     );
   }
 
-  // Pick an image from the gallery
+  // Pick a profile image from the gallery and save the path
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _profileImage = File(pickedFile.path); // Store the selected image file
+        _profileImage = File(pickedFile.path);
       });
-      // Save the selected image path to SharedPreferences
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('profileImagePath', pickedFile.path);
     }
   }
 
-  // Widget for passcode setup or change
-  Widget _buildPasscodeField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          controller: _passcodeController,
-          obscureText: true,
-          keyboardType: TextInputType.number,
-          maxLength: 4,
-          decoration: InputDecoration(
-            labelText: _savedPasscode == null ? 'Set 4-digit Passcode' : 'Change 4-digit Passcode',
+  // Reset the challenge progress in SharedPreferences
+  Future<void> _resetChallenge() async {
+    final prefs = await SharedPreferences.getInstance();
+    for (int day = 1; day <= 75; day++) {
+      await prefs.remove('day_${day}_completed'); // Remove completion status for each day
+    }
+
+    // Reset the current day to 1
+    await prefs.setInt('currentDay', 1);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Challenge has been reset.")),
+    );
+
+    // Return to the HomeScreen with reset indicator
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const HomeScreen(),
+      ),
+    );
+  }
+
+  // Show a confirmation dialog before resetting
+  Future<void> _showResetConfirmationDialog() async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Reset Challenge"),
+          content: const Text(
+            "Are you sure you want to reset the challenge? All progress will be lost.",
           ),
-        ),
-        if (_savedPasscode != null)
-          Text(
-            'Enter a new passcode to change the current one.',
-            style: TextStyle(color: Colors.grey),
-          ),
-      ],
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Cancel"),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text("Reset"),
+              onPressed: () async {
+                Navigator.of(context).pop(); // Close dialog
+                await _resetChallenge(); // Perform reset and navigate to HomeScreen
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: const Text("Edit Profile")),
+      drawer: DrawerMenu(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -151,23 +134,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 radius: 50,
                 backgroundImage: _profileImage != null
                     ? FileImage(_profileImage!)
-                    : null,
-                child: _profileImage == null
-                    ? const Icon(Icons.camera_alt, size: 50)
-                    : null,
+                    : const AssetImage('assets/default_avatar.png')
+                as ImageProvider,
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _usernameController,
-              decoration: const InputDecoration(labelText: 'Username'),
+              decoration: const InputDecoration(labelText: "Username"),
             ),
-            const SizedBox(height: 16),
-            _buildPasscodeField(),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _saveProfile,
-              child: const Text('Save Profile'),
+              child: const Text("Save Profile"),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _showResetConfirmationDialog,
+              child: const Text("Reset Challenge"),
             ),
           ],
         ),
@@ -175,3 +159,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+

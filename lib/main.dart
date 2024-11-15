@@ -8,7 +8,15 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/goal_setup_screen.dart';
+import 'screens/challenge_screen.dart';
+import 'screens/bulletin_board_screen.dart';
+import 'screens/picture_library_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/weight_tracker_screen.dart';
 import 'firebase/firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 const String alarmTimeKey = 'alarm_time';
 const String isolateName = 'isolate';
@@ -101,7 +109,37 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: '75 Hard Challenge',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const LoginScreen(),
+      home: _getHomePage(),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/goalSetup': (context) => const GoalSetupScreen(day: 1,),
+        '/challenge': (context) => const ChallengeScreen(),
+        '/bulletinBoard': (context) => const BulletinBoardScreen(),
+        '/pictureLibrary': (context) => const PictureLibraryScreen(),
+        '/profile': (context) =>  ProfileScreen(),
+        '/weightTracker': (context) => const WeightTrackerScreen(),
+      },
+    );
+  }
+
+  // Determine initial screen based on user login status
+  Widget _getHomePage() {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        } else if (snapshot.hasData) {
+          // User is logged in, navigate to HomeScreen
+          return const HomeScreen();
+        } else {
+          // User is not logged in, navigate to LoginScreen
+          return const LoginScreen();
+        }
+      },
     );
   }
 }

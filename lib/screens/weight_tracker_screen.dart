@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
 
+import '../extras/drawer_menu.dart';
+
 class WeightTrackerScreen extends StatefulWidget {
   const WeightTrackerScreen({Key? key}) : super(key: key);
+  static const String routeName = '/weightTracker';
 
   @override
   _WeightTrackerScreenState createState() => _WeightTrackerScreenState();
@@ -12,6 +15,7 @@ class WeightTrackerScreen extends StatefulWidget {
 class _WeightTrackerScreenState extends State<WeightTrackerScreen> {
   final TextEditingController _weightController = TextEditingController();
   List<double> _weights = [];
+
 
   @override
   void initState() {
@@ -48,6 +52,7 @@ class _WeightTrackerScreenState extends State<WeightTrackerScreen> {
         title: const Text('Weight Tracker', style: TextStyle(color: Colors.blue)),
         backgroundColor: Colors.black,
       ),
+      drawer: DrawerMenu(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

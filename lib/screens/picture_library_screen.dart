@@ -3,8 +3,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import 'dart:convert';
 
+import '../extras/drawer_menu.dart';
+
 class PictureLibraryScreen extends StatefulWidget {
   const PictureLibraryScreen({Key? key}) : super(key: key);
+  static const String routeName = '/pictureLibrary';
 
   @override
   _PictureLibraryScreenState createState() => _PictureLibraryScreenState();
@@ -12,6 +15,7 @@ class PictureLibraryScreen extends StatefulWidget {
 
 class _PictureLibraryScreenState extends State<PictureLibraryScreen> {
   List<Map<String, dynamic>> progressPictures = [];
+
 
   @override
   void initState() {
@@ -113,6 +117,7 @@ class FullScreenImageScreen extends StatelessWidget {
         ),
         backgroundColor: Colors.black,
       ),
+      drawer: DrawerMenu(),
       body: Center(
         child: Image.file(
           File(imagePath),

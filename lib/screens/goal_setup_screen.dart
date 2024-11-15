@@ -6,10 +6,13 @@ import 'dart:io';
 import 'dart:convert';
 
 import '../alarm/alarm_page.dart';
+import '../extras/drawer_menu.dart';
 import 'weight_tracker_screen.dart';
+import 'challenge_screen.dart';
 
 class GoalSetupScreen extends StatefulWidget {
   final int day;
+  static const String routeName = '/goalSetup';
 
   const GoalSetupScreen({super.key, required this.day});
 
@@ -21,6 +24,7 @@ class _GoalSetupScreenState extends State<GoalSetupScreen> {
   final DateFormat timeFormat = DateFormat("hh:mm a");
   List<bool> _goalsCompleted = List.filled(4, false);
   final ImagePicker _picker = ImagePicker();
+  static const String routeName = '/goalsetupscreen';
 
   @override
   void initState() {
@@ -46,6 +50,23 @@ class _GoalSetupScreenState extends State<GoalSetupScreen> {
     await prefs.setStringList('goals_day_${widget.day}', goalsToSave);
   }
 
+  Future<void> _markGoalsCompleted() async {
+    setState(() {
+      _goalsCompleted = List.filled(4, true); // Mark all goals as completed
+    });
+    await _saveGoals();
+
+    // Mark the day as completed in SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('day_${widget.day}_completed', true);
+
+    // Navigate back to the ChallengeScreen and update the day's color
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const ChallengeScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,6 +78,7 @@ class _GoalSetupScreenState extends State<GoalSetupScreen> {
         ),
         backgroundColor: Colors.black,
       ),
+      drawer: DrawerMenu(),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
@@ -147,6 +169,19 @@ class _GoalSetupScreenState extends State<GoalSetupScreen> {
               style: TextStyle(color: Colors.white),
             ),
           ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green, // Completed goals button
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 60),
+            ),
+            onPressed: _markGoalsCompleted, // Mark all goals as completed
+            child: const Text(
+              'Goals Completed',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
         ],
       ),
     );
@@ -171,7 +206,7 @@ class _GoalSetupScreenState extends State<GoalSetupScreen> {
             Flexible(
               child: Text(
                 title,
-                style: TextStyle(color: Colors.white, fontSize: 16),
+                style: const TextStyle(color: Colors.white),
               ),
             ),
           ],
@@ -179,54 +214,11 @@ class _GoalSetupScreenState extends State<GoalSetupScreen> {
         value: _goalsCompleted[index],
         onChanged: (bool? value) {
           setState(() {
-            _goalsCompleted[index] = value ?? false;
+            _goalsCompleted[index] = value!;
           });
-          if (index == 3 && value == true) {
-            _takePicture();
-          }
+          _saveGoals(); // Save goals state on change
         },
-        controlAffinity: ListTileControlAffinity.leading,
       ),
-    );
-  }
-
-  // Function to take a picture and save it to SharedPreferences
-  Future<void> _takePicture() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-    if (image != null) {
-      final prefs = await SharedPreferences.getInstance();
-      final pictureData = {
-        'day': widget.day,
-        'filePath': image.path,
-      };
-
-      // Retrieve and update the picture list in SharedPreferences
-      List<String> savedPictures = prefs.getStringList('progressPictures') ?? [];
-      savedPictures.add(jsonEncode(pictureData));
-      await prefs.setStringList('progressPictures', savedPictures);
-
-      _showPictureTakenDialog(image.path);
-    }
-  }
-
-  // Display a dialog confirming the picture was taken
-  void _showPictureTakenDialog(String imagePath) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Picture Taken'),
-          content: Text('Picture saved at: $imagePath'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
     );
   }
 }

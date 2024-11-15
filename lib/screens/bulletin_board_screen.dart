@@ -4,8 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../extras/drawer_menu.dart';
+
 class BulletinBoardScreen extends StatefulWidget {
   const BulletinBoardScreen({super.key});
+  static const String routeName = '/bulletinBoard';
 
   @override
   _BulletinBoardScreenState createState() => _BulletinBoardScreenState();
@@ -18,6 +21,7 @@ class _BulletinBoardScreenState extends State<BulletinBoardScreen> {
   bool _isUploading = false;
   String _username = 'Anonymous';
   String? _profileImagePath;
+
 
   @override
   void initState() {
@@ -44,6 +48,7 @@ class _BulletinBoardScreenState extends State<BulletinBoardScreen> {
       appBar: AppBar(
         title: const Text('Bulletin Board'),
       ),
+      drawer: DrawerMenu(),
       body: Column(
         children: [
           Expanded(child: _buildPostList()),
