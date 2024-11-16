@@ -55,7 +55,7 @@ class _AlarmPageState extends State<AlarmPage> {
     final alarmTime = DateTime(now.year, now.month, now.day, time.hour, time.minute);
     final durationUntilAlarm = alarmTime.isAfter(now)
         ? alarmTime.difference(now)
-        : alarmTime.add(Duration(days: 1)).difference(now);
+        : alarmTime.add(const Duration(days: 1)).difference(now);
 
     // Store the alarm label globally
     currentAlarmLabel = widget.alarmLabel;
@@ -73,7 +73,7 @@ class _AlarmPageState extends State<AlarmPage> {
 
     developer.log('Alarm set with ID: $alarmId, Duration: $durationUntilAlarm');
 
-    await prefs?.setString(alarmTimeKey, '${time.hour}:${time.minute}');
+    // Save the selected time
     setState(() {
       _selectedTime = time;
     });
@@ -104,7 +104,7 @@ class _AlarmPageState extends State<AlarmPage> {
       notificationDetails,
     );
 
-    developer.log('Notification displayed with sound for alarm label: ${currentAlarmLabel}');
+    developer.log('Notification displayed with sound for alarm label: $currentAlarmLabel');
   }
 
   Future<void> _selectTime(BuildContext context) async {
@@ -118,19 +118,34 @@ class _AlarmPageState extends State<AlarmPage> {
     }
   }
 
+  void _saveAlarm() {
+    if (_selectedTime != null) {
+      Navigator.pop(context, true); // Return to the previous screen
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please set an alarm time before saving.'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.alarmLabel)),
+      appBar: AppBar(
+        title: Text(widget.alarmLabel),
+        backgroundColor: Colors.black,
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          children: <Widget>[
             Text(
               _selectedTime != null
                   ? 'Alarm set for ${_selectedTime!.format(context)}'
                   : 'No alarm set',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: const TextStyle(fontSize: 20),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -143,7 +158,12 @@ class _AlarmPageState extends State<AlarmPage> {
                   await _selectTime(context);
                 }
               },
-              child: const Text('Set Alarm'),
+              child: const Text('Select Time'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _saveAlarm,
+              child: const Text('Save Alarm'),
             ),
           ],
         ),
@@ -151,4 +171,3 @@ class _AlarmPageState extends State<AlarmPage> {
     );
   }
 }
-

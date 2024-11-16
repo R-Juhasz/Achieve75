@@ -16,7 +16,6 @@ class PictureLibraryScreen extends StatefulWidget {
 class _PictureLibraryScreenState extends State<PictureLibraryScreen> {
   List<Map<String, dynamic>> progressPictures = [];
 
-
   @override
   void initState() {
     super.initState();
@@ -41,15 +40,22 @@ class _PictureLibraryScreenState extends State<PictureLibraryScreen> {
       appBar: AppBar(
         title: const Text(
           'Progress Pictures',
-          style: TextStyle(color: Colors.blue),
+          style: TextStyle(
+            color: Colors.blue,
+            fontFamily: 'Gugi',
+          ),
         ),
         backgroundColor: Colors.black,
       ),
       body: progressPictures.isEmpty
           ? Center(
-        child: Text(
+        child: const Text(
           'No progress pictures yet!',
-          style: TextStyle(color: Colors.white, fontSize: 16),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontFamily: 'Gugi',
+          ),
         ),
       )
           : GridView.builder(
@@ -82,7 +88,11 @@ class _PictureLibraryScreenState extends State<PictureLibraryScreen> {
                   padding: const EdgeInsets.all(4.0),
                   child: Text(
                     'Day ${picture['day']}',
-                    style: const TextStyle(color: Colors.blue, fontSize: 16),
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      fontSize: 16,
+                      fontFamily: 'Gugi',
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -111,9 +121,13 @@ class FullScreenImageScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
+        iconTheme: const IconThemeData(color: Colors.white), // Hamburger icon in white
         title: Text(
           'Day $day',
-          style: const TextStyle(color: Colors.blue),
+          style: const TextStyle(
+            color: Colors.blue,
+            fontFamily: 'Gugi',
+          ),
         ),
         backgroundColor: Colors.black,
       ),

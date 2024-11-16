@@ -16,7 +16,6 @@ class _WeightTrackerScreenState extends State<WeightTrackerScreen> {
   final TextEditingController _weightController = TextEditingController();
   List<double> _weights = [];
 
-
   @override
   void initState() {
     super.initState();
@@ -33,13 +32,19 @@ class _WeightTrackerScreenState extends State<WeightTrackerScreen> {
 
   Future<void> _saveWeight() async {
     final weight = double.tryParse(_weightController.text);
-    if (weight == null) return;
+    if (weight == null || weight <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid weight!')),
+      );
+      return;
+    }
 
     setState(() {
       _weights.add(weight);
     });
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('weights', _weights.map((w) => w.toString()).toList());
+    await prefs.setStringList(
+        'weights', _weights.map((w) => w.toString()).toList());
 
     _weightController.clear();
   }
@@ -49,9 +54,13 @@ class _WeightTrackerScreenState extends State<WeightTrackerScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Weight Tracker', style: TextStyle(color: Colors.blue)),
-        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white), // Hamburger icon in white
+        title: const Text(
+          'Weight Tracker',
+          style: TextStyle(fontFamily: 'Gugi', fontSize: 24),
+        ),
       ),
+
       drawer: DrawerMenu(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -60,10 +69,16 @@ class _WeightTrackerScreenState extends State<WeightTrackerScreen> {
             TextField(
               controller: _weightController,
               keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(
+                color: Colors.white,
+                fontFamily: 'Gugi',
+              ),
               decoration: const InputDecoration(
                 labelText: 'Enter Weight (kg)',
-                labelStyle: TextStyle(color: Colors.blue),
+                labelStyle: TextStyle(
+                  color: Colors.blue,
+                  fontFamily: 'Gugi',
+                ),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -74,7 +89,13 @@ class _WeightTrackerScreenState extends State<WeightTrackerScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 60),
               ),
               onPressed: _saveWeight,
-              child: const Text('Save Weight', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Save Weight',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Gugi',
+                ),
+              ),
             ),
             const SizedBox(height: 20),
             Expanded(
@@ -82,12 +103,53 @@ class _WeightTrackerScreenState extends State<WeightTrackerScreen> {
                   ? const Center(
                 child: Text(
                   'No weight data available.',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'Gugi',
+                  ),
                 ),
               )
                   : LineChart(
                 LineChartData(
                   borderData: FlBorderData(show: true),
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          return Text(
+                            value.toStringAsFixed(1),
+                            style: const TextStyle(
+                              fontFamily: 'Gugi',
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          return Text(
+                            value.toInt().toString(),
+                            style: const TextStyle(
+                              fontFamily: 'Gugi',
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  minY: _weights.isNotEmpty
+                      ? _weights.reduce((a, b) => a < b ? a : b) - 5
+                      : 0,
+                  maxY: _weights.isNotEmpty
+                      ? _weights.reduce((a, b) => a > b ? a : b) + 5
+                      : 10,
                   lineBarsData: [
                     LineChartBarData(
                       spots: _weights.asMap().entries.map((entry) {
@@ -111,4 +173,3 @@ class _WeightTrackerScreenState extends State<WeightTrackerScreen> {
     );
   }
 }
-

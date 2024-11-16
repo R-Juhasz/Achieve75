@@ -79,7 +79,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await prefs.setInt('currentDay', 1);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Challenge has been reset.")),
+      const SnackBar(
+        content: Text(
+          "Challenge has been reset.",
+          style: TextStyle(fontFamily: 'Gugi'),
+        ),
+      ),
     );
 
     // Return to the HomeScreen with reset indicator
@@ -97,17 +102,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Reset Challenge"),
+          title: const Text(
+            "Reset Challenge",
+            style: TextStyle(fontFamily: 'Gugi'),
+          ),
           content: const Text(
             "Are you sure you want to reset the challenge? All progress will be lost.",
+            style: TextStyle(fontFamily: 'Gugi'),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text("Cancel"),
+              child: const Text(
+                "Cancel",
+                style: TextStyle(fontFamily: 'Gugi'),
+              ),
               onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
-              child: const Text("Reset"),
+              child: const Text(
+                "Reset",
+                style: TextStyle(fontFamily: 'Gugi'),
+              ),
               onPressed: () async {
                 Navigator.of(context).pop(); // Close dialog
                 await _resetChallenge(); // Perform reset and navigate to HomeScreen
@@ -122,7 +137,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Edit Profile")),
+      appBar: AppBar(
+        iconTheme: const IconThemeData(color: Colors.white), // Hamburger icon in white
+        title: const Text(
+          "Edit Profile",
+          style: TextStyle(fontFamily: 'Gugi'),
+        ),
+      ),
       drawer: DrawerMenu(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -141,17 +162,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: _usernameController,
-              decoration: const InputDecoration(labelText: "Username"),
+              decoration: const InputDecoration(
+                labelText: "Username",
+                labelStyle: TextStyle(fontFamily: 'Gugi'),
+              ),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _saveProfile,
-              child: const Text("Save Profile"),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+              child: const Text(
+                "Save Profile",
+                style: TextStyle(fontFamily: 'Gugi'),
+              ),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _showResetConfirmationDialog,
-              child: const Text("Reset Challenge"),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text(
+                "Reset Challenge",
+                style: TextStyle(fontFamily: 'Gugi'),
+              ),
             ),
           ],
         ),
@@ -159,4 +191,3 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-

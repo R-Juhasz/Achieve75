@@ -21,8 +21,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   File? _profileImage;
-  String _username = "User"; // Default username
-  int _currentDay = 1; // Default to day 1
+  String _username = "User";
+  int _currentDay = 1;
 
   @override
   void initState() {
@@ -32,18 +32,27 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadCurrentDay();
   }
 
-  // Load the profile image from SharedPreferences
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadCurrentDay();
+  }
+
   Future<void> _loadProfileImage() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? imagePath = prefs.getString('profileImagePath');
-    if (imagePath != null) {
+    if (imagePath != null && File(imagePath).existsSync()) {
       setState(() {
         _profileImage = File(imagePath);
+      });
+    } else {
+      prefs.remove('profileImagePath');
+      setState(() {
+        _profileImage = null;
       });
     }
   }
 
-  // Load the username from SharedPreferences
   Future<void> _loadUsername() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? username = prefs.getString('username');
@@ -54,7 +63,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Load the current day from SharedPreferences
   Future<void> _loadCurrentDay() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int? currentDay = prefs.getInt('currentDay') ?? 1;
@@ -63,13 +71,46 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Sign out the user
   Future<void> _signOut() async {
-    await FirebaseAuth.instance.signOut();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    bool? confirmSignOut = await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Sign Out',
+            style: TextStyle(fontFamily: 'Gugi'),
+          ),
+          content: const Text(
+            'Are you sure you want to sign out?',
+            style: TextStyle(fontFamily: 'Gugi'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(fontFamily: 'Gugi'),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                'Sign Out',
+                style: TextStyle(fontFamily: 'Gugi'),
+              ),
+            ),
+          ],
+        );
+      },
     );
+
+    if (confirmSignOut == true) {
+      await FirebaseAuth.instance.signOut();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
   }
 
   @override
@@ -77,9 +118,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text(
-          'Achieve75',
-          style: TextStyle(color: Colors.blue),
+        iconTheme: const IconThemeData(color: Colors.white), // Hamburger icon in white
+        title: Image.asset(
+          'assets/images/achieve75-high-resolution-logo-transparent.png',
+          height: 40,
         ),
         centerTitle: true,
         backgroundColor: Colors.black,
@@ -90,7 +132,19 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            // Progress bar for 75-Day Challenge
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Welcome back, $_username!',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontFamily: 'Gugi',
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Column(
@@ -102,27 +156,34 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Day $_currentDay of 75',
-                    style: const TextStyle(color: Colors.white),
+                    _currentDay >= 75
+                        ? 'Challenge Complete!'
+                        : 'Day $_currentDay of 75',
+                    style: TextStyle(
+                      color: _currentDay >= 75 ? Colors.green : Colors.white,
+                      fontSize: 18,
+                      fontFamily: 'Gugi',
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 50),
-            // Profile section: picture above the username
             Container(
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.symmetric(horizontal: 16.0),
               decoration: BoxDecoration(
+                color: Colors.grey.shade900,
                 border: Border.all(color: Colors.blue, width: 1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
                 children: [
                   CircleAvatar(
-                    backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
+                    backgroundImage:
+                    _profileImage != null ? FileImage(_profileImage!) : null,
                     child: _profileImage == null
-                        ? const Icon(Icons.person, color: Colors.white)
+                        ? const Icon(Icons.person, color: Colors.white, size: 40)
                         : null,
                     backgroundColor: Colors.blue,
                     radius: 40,
@@ -130,92 +191,87 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 10),
                   Text(
                     _username,
-                    style: const TextStyle(color: Colors.white, fontSize: 24),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontFamily: 'Gugi',
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 50),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.blue,
-                minimumSize: const Size(200, 50),
-              ),
+            _buildModernButton(
+              context,
+              label: 'View Challenge',
+              icon: Icons.flag,
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ChallengeScreen()),
-                );
+                  MaterialPageRoute(
+                      builder: (context) => const ChallengeScreen()),
+                ).then((_) => _loadCurrentDay());
               },
-              child: const Text('View Challenge'),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.blue,
-                minimumSize: const Size(200, 50),
-              ),
+            _buildModernButton(
+              context,
+              label: 'Bulletin Board',
+              icon: Icons.message,
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => BulletinBoardScreen()),
                 );
               },
-              child: const Text('Bulletin Board'),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.blue,
-                minimumSize: const Size(200, 50),
-              ),
+            _buildModernButton(
+              context,
+              label: 'View Progress Pictures',
+              icon: Icons.photo_library,
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const PictureLibraryScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const PictureLibraryScreen()),
                 );
               },
-              child: const Text('View Progress Pictures'),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.blue,
-                minimumSize: const Size(200, 50),
-              ),
+            _buildModernButton(
+              context,
+              label: 'Track Weight',
+              icon: Icons.monitor_weight,
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const WeightTrackerScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const WeightTrackerScreen()),
                 );
               },
-              child: const Text('Track Weight'),
             ),
           ],
         ),
       ),
       floatingActionButton: Stack(
         children: [
-          // Sign Out Button (bottom left)
           Positioned(
             bottom: 16,
             left: 16,
             child: FloatingActionButton(
+              heroTag: 'signOutButton',
               onPressed: _signOut,
               backgroundColor: Colors.red,
               child: const Icon(Icons.logout),
               tooltip: 'Sign Out',
             ),
           ),
-          // Profile Button (bottom right)
           Positioned(
             bottom: 16,
             right: 16,
             child: FloatingActionButton(
+              heroTag: 'profileButton',
               onPressed: () {
                 Navigator.push(
                   context,
@@ -234,7 +290,30 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  Widget _buildModernButton(
+      BuildContext context, {
+        required String label,
+        required IconData icon,
+        required VoidCallback onPressed,
+      }) {
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: Colors.blue,
+        minimumSize: const Size(200, 50),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12), // Modern rounded corners
+        ),
+        side: const BorderSide(color: Colors.white, width: 1), // Thin white border
+        elevation: 4, // Subtle shadow for depth
+      ),
+      onPressed: onPressed,
+      icon: Icon(icon),
+      label: Text(
+        label,
+        style: const TextStyle(fontFamily: 'Gugi'),
+      ),
+    );
+  }
 }
-
-
-

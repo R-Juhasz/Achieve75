@@ -40,3 +40,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+  fonts:
+    - family: Gugi
+      fonts:
+        - asset: assets/fonts/Gugi.ttf

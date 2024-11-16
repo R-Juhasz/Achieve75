@@ -1,18 +1,30 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  // Singleton pattern
+  static final NotificationService _notificationService =
+  NotificationService._internal();
+
+  factory NotificationService() {
+    return _notificationService;
+  }
+
+  NotificationService._internal();
+
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  FlutterLocalNotificationsPlugin();
 
   // Initialize the notification service
   Future<void> init() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
     AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    final InitializationSettings initializationSettings = InitializationSettings(
+    final InitializationSettings initializationSettings =
+    InitializationSettings(
       android: initializationSettingsAndroid,
-      iOS: null,
     );
 
     await flutterLocalNotificationsPlugin.initialize(
@@ -22,41 +34,43 @@ class NotificationService {
 
     tz.initializeTimeZones();
 
-    await createNotificationChannel();
+    await _createNotificationChannels();
   }
 
-  Future<void> createNotificationChannel() async {
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'alarm_channel_id',
-      'Alarm Notifications',
-      description: 'Your alarm channel for notifications',
+  Future<void> _createNotificationChannels() async {
+    // Main Notification Channel
+    const AndroidNotificationChannel mainChannel = AndroidNotificationChannel(
+      'main_channel_id',
+      'Main Notifications',
+      description: 'Channel for main notifications',
       importance: Importance.max,
       playSound: true,
-      sound: RawResourceAndroidNotificationSound('alarm_sound'),
+      sound: RawResourceAndroidNotificationSound('notification_sound'),
     );
 
+    // Create the channel on the device
     await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
+        .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(mainChannel);
 
-    print("Notification channel created!");
+    // Additional channels can be created here
   }
 
   Future<void> requestPermissions() async {
     final status = await Permission.notification.request();
-    final alarmStatus = await Permission.scheduleExactAlarm.request();
 
-    print('Notification permission: ${status.isGranted}');
-    print('Exact alarm permission: ${alarmStatus.isGranted}');
-
-    if (!status.isGranted || !alarmStatus.isGranted) {
-      print("Notification or Exact Alarm permissions denied.");
+    if (status.isGranted) {
+      print("Notification permissions granted.");
     } else {
-      print("Notification and Exact Alarm permissions granted.");
+      print("Notification permissions denied.");
     }
   }
 
   void onDidReceiveNotificationResponse(NotificationResponse response) {
     print("Notification tapped: ${response.payload}");
+    // Handle notification tap event here
   }
+
+// Existing notification methods can be added here
 }

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:achieve75/screens/home_screen.dart';
-import 'package:achieve75/screens/profile_screen.dart'; // Import the Profile screen
+import 'package:achieve75/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -102,7 +102,13 @@ class _Hard75SlideshowState extends State<Hard75Slideshow> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: const Text('75 Hard Challenge Goals', style: TextStyle(color: Colors.blue)),
+        title: const Text(
+          '75 Hard Challenge Goals',
+          style: TextStyle(
+            color: Colors.blue,
+            fontFamily: 'Gugi',
+          ),
+        ),
         elevation: 0,
       ),
       body: Stack(
@@ -137,7 +143,14 @@ class _Hard75SlideshowState extends State<Hard75Slideshow> {
                   ),
                 ),
                 onPressed: _onContinuePressed,
-                child: const Text('Continue', style: TextStyle(color: Colors.white, fontSize: 16)),
+                child: const Text(
+                  'Continue',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontFamily: 'Gugi',
+                  ),
+                ),
               ),
             ),
           ),
@@ -192,13 +205,22 @@ class GoalSlide extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             title,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontFamily: 'Gugi',
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
           Text(
             description,
-            style: const TextStyle(fontSize: 18, color: Colors.white70),
+            style: const TextStyle(
+              fontSize: 18,
+              color: Colors.white70,
+              fontFamily: 'Gugi',
+            ),
             textAlign: TextAlign.center,
           ),
         ],

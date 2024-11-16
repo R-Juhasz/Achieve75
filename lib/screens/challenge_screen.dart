@@ -14,61 +14,119 @@ class ChallengeScreen extends StatefulWidget {
 class _ChallengeScreenState extends State<ChallengeScreen> {
   int _currentDay = 1;
   bool _showedRestartPrompt = false;
+  DateTime? _startDate;
 
   @override
   void initState() {
     super.initState();
-    _currentDay = _getCurrentDay();
-    _checkForFailedDays(); // Check if any day has failed on startup
+    _loadState();
   }
 
-  // Get current day based on the date
+  Future<void> _loadState() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Load or initialize the start date
+    String? startDateString = prefs.getString('startDate');
+    if (startDateString != null) {
+      _startDate = DateTime.parse(startDateString);
+    } else {
+      _startDate = DateTime.now();
+      await prefs.setString('startDate', _startDate!.toIso8601String());
+    }
+
+    _currentDay = _getCurrentDay();
+    await prefs.setInt('currentDay', _currentDay); // Save the current day
+    _showedRestartPrompt = prefs.getBool('showedRestartPrompt') ?? false;
+    await _checkForFailedDay(); // Only check for the current day
+    setState(() {}); // Update state to reflect loaded values
+  }
+
   int _getCurrentDay() {
     final now = DateTime.now();
-    final startDate = DateTime(2024, 11, 1); // Adjust as needed
-    final difference = now.difference(startDate).inDays + 1;
-    return difference.clamp(1, 75); // Ensure it stays within day 1 to 75
+    final difference = now.difference(_startDate!).inDays + 1;
+    return difference.clamp(1, 75);
   }
 
-  // Check if a specific day is completed
-  Future<bool> _isDayCompleted(int day) async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('day_${day}_completed') ?? false;
+  Future<void> _checkForFailedDay() async {
+    if (!_showedRestartPrompt) {
+      final prefs = await SharedPreferences.getInstance();
+      bool isCurrentDayCompleted =
+          prefs.getBool('day_${_currentDay}_completed') ?? false;
+
+      if (!isCurrentDayCompleted && _isCurrentDayOver()) {
+        _showRestartPrompt();
+      }
+    }
   }
 
-  // Reset all progress if the user chooses to restart
+  bool _isCurrentDayOver() {
+    final now = DateTime.now();
+    // Assuming the day ends at midnight
+    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    return now.isAfter(endOfDay);
+  }
+
   Future<void> _resetChallenge() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // Clear all day-specific data (goals and completion status)
     for (int day = 1; day <= 75; day++) {
       await prefs.remove('day_${day}_completed');
+      await prefs.remove('goals_day_${day}');
     }
+
+    // Clear other data
+    await prefs.remove('startDate');
+    await prefs.remove('showedRestartPrompt');
+    await prefs.remove('currentDay');
+
+    // Reset the start date to the current day
+    _startDate = DateTime.now();
+    await prefs.setString('startDate', _startDate!.toIso8601String());
+
+    await prefs.setBool('showedRestartPrompt', false); // Reset the restart prompt flag
+    await prefs.setInt('currentDay', 1); // Reset current day to day 1
     setState(() {
       _currentDay = 1;
-      _showedRestartPrompt = false; // Reset the prompt tracker
+      _showedRestartPrompt = false;
     });
   }
 
-  // Show the restart prompt dialog once if a day has failed
   void _showRestartPrompt() {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Restart Challenge"),
+          title: const Text(
+            "Restart Challenge",
+            style: TextStyle(fontFamily: 'Gugi'),
+          ),
           content: const Text(
-              "You have failed a day. Would you like to restart the challenge or continue?"),
+            "You have failed the current day. Would you like to restart the challenge or continue?",
+            style: TextStyle(fontSize: 16, fontFamily: 'Gugi'),
+          ),
           actions: <Widget>[
             TextButton(
-              child: const Text("Continue"),
-              onPressed: () {
+              child: const Text(
+                "Continue",
+                style: TextStyle(fontFamily: 'Gugi'),
+              ),
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('showedRestartPrompt', true);
                 setState(() {
-                  _showedRestartPrompt = true; // Prevent showing the prompt again
+                  _showedRestartPrompt = true;
                 });
                 Navigator.of(context).pop();
               },
             ),
-            TextButton(
-              child: const Text("Restart"),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text(
+                "Restart",
+                style: TextStyle(color: Colors.white, fontFamily: 'Gugi'),
+              ),
               onPressed: () async {
                 await _resetChallenge();
                 Navigator.of(context).pop();
@@ -80,16 +138,13 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
     );
   }
 
-  // Check for failed days and show prompt if needed
-  Future<void> _checkForFailedDays() async {
+  Future<Map<int, bool>> _loadChallengeProgress() async {
     final prefs = await SharedPreferences.getInstance();
-    for (int day = 1; day < _currentDay; day++) {
-      bool isCompleted = prefs.getBool('day_${day}_completed') ?? true;
-      if (!isCompleted && !_showedRestartPrompt) {
-        _showRestartPrompt();
-        break;
-      }
+    Map<int, bool> progress = {};
+    for (int day = 1; day <= 75; day++) {
+      progress[day] = prefs.getBool('day_${day}_completed') ?? false;
     }
+    return progress;
   }
 
   @override
@@ -97,46 +152,82 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Achieve75', style: TextStyle(color: Colors.blue)),
+        iconTheme: const IconThemeData(color: Colors.white), // Hamburger icon in white
+        title: Image.asset(
+          'assets/images/achieve75-high-resolution-logo-transparent.png',
+          height: 40,
+        ),
+        centerTitle: true,
         backgroundColor: Colors.black,
         elevation: 0,
       ),
       drawer: DrawerMenu(),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: GridView.builder(
-          itemCount: 75,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 5,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-          ),
-          itemBuilder: (BuildContext context, int index) {
-            final day = index + 1;
+      body: FutureBuilder<Map<int, bool>>(
+        future: _loadChallengeProgress(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.blue),
+            );
+          }
 
-            return FutureBuilder<bool>(
-              future: _isDayCompleted(day),
-              builder: (context, snapshot) {
-                Color dayColor = Colors.blue; // Default to blue for all days
+          if (!snapshot.hasData) {
+            return const Center(
+              child: Text(
+                'Failed to load challenge progress',
+                style: TextStyle(color: Colors.white, fontFamily: 'Gugi'),
+              ),
+            );
+          }
 
-                if (snapshot.connectionState == ConnectionState.done && snapshot.data == true) {
-                  dayColor = Colors.green; // Set to green only if the day is completed
+          final progress = snapshot.data!;
+
+          return GridView.builder(
+            itemCount: 75,
+            padding: const EdgeInsets.all(10),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 5,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+            ),
+            itemBuilder: (BuildContext context, int index) {
+              final day = index + 1;
+              Color dayColor;
+
+              // Determine the color of each day
+              if (day == _currentDay && progress[day] == true) {
+                dayColor = Colors.green; // Current day completed
+              } else if (day == _currentDay && progress[day] != true) {
+                dayColor = Colors.blue; // Current day not completed
+              } else if (day < _currentDay && progress[day] == true) {
+                dayColor = Colors.green; // Past day completed
+              } else if (day < _currentDay && progress[day] == false) {
+                dayColor = Colors.red; // Past day not completed
+              } else {
+                dayColor = Colors.grey.shade800; // Future days
+              }
+
+              return GestureDetector(
+                onTap: (day == _currentDay)
+                    ? () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => GoalSetupScreen(day: day),
+                    ),
+                  ).then((result) {
+                    if (result == true) {
+                      setState(() {}); // Reload state if goals are completed
+                    }
+                  });
                 }
-
-                return GestureDetector(
-                  onTap: (day <= _currentDay)
-                      ? () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => GoalSetupScreen(day: day),
-                      ),
-                    ).then((_) {
-                      // Reload current day after returning
-                      setState(() {});
-                    });
-                  }
-                      : null, // Disable tap for days beyond the current day
+                    : null, // Disable tap for other days
+                child: Tooltip(
+                  message: (day == _currentDay)
+                      ? 'Go to Day $day'
+                      : (day < _currentDay
+                      ? 'Day $day (Past)'
+                      : 'Day $day is locked'),
                   child: Container(
                     decoration: BoxDecoration(
                       color: dayColor,
@@ -148,15 +239,16 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
                         style: const TextStyle(
                           fontSize: 18,
                           color: Colors.white,
+                          fontFamily: 'Gugi',
                         ),
                       ),
                     ),
                   ),
-                );
-              },
-            );
-          },
-        ),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }

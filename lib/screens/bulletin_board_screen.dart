@@ -22,7 +22,6 @@ class _BulletinBoardScreenState extends State<BulletinBoardScreen> {
   String _username = 'Anonymous';
   String? _profileImagePath;
 
-
   @override
   void initState() {
     super.initState();
@@ -33,7 +32,7 @@ class _BulletinBoardScreenState extends State<BulletinBoardScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       _username = prefs.getString('username') ?? 'Anonymous';
-      _profileImagePath = prefs.getString('profileImagePath'); // Load profile image path
+      _profileImagePath = prefs.getString('profileImagePath');
     });
   }
 
@@ -46,7 +45,11 @@ class _BulletinBoardScreenState extends State<BulletinBoardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bulletin Board'),
+        iconTheme: const IconThemeData(color: Colors.white), // Hamburger icon in white
+        title: const Text(
+          'Bulletin Board',
+          style: TextStyle(fontFamily: 'Gugi', fontSize: 24),
+        ),
       ),
       drawer: DrawerMenu(),
       body: Column(
@@ -72,6 +75,7 @@ class _BulletinBoardScreenState extends State<BulletinBoardScreen> {
               controller: _commentController,
               decoration: const InputDecoration(
                 hintText: 'Enter your comment',
+                hintStyle: TextStyle(fontFamily: 'Gugi'),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -92,27 +96,23 @@ class _BulletinBoardScreenState extends State<BulletinBoardScreen> {
         _imageFile = File(pickedFile.path);
       });
 
-      // Save the image path in SharedPreferences
       _saveProfileImagePath(pickedFile.path);
     }
   }
 
   Future<void> _addPost() async {
     if (_commentController.text.trim().isNotEmpty || _imageFile != null) {
-      String imageUrl = '';
-
       try {
         setState(() {
           _isUploading = true;
         });
 
-        // Add post to Firestore
         await FirebaseFirestore.instance.collection('posts').add({
           'username': _username,
           'comment': _commentController.text,
-          'imageUrl': _imageFile != null ? _imageFile!.path : '', // Store local image path
+          'imageUrl': _imageFile != null ? _imageFile!.path : '',
           'timestamp': FieldValue.serverTimestamp(),
-          'profileImagePath': _profileImagePath ?? '', // Use local profile image path
+          'profileImagePath': _profileImagePath ?? '',
         });
 
         _commentController.clear();
@@ -120,7 +120,6 @@ class _BulletinBoardScreenState extends State<BulletinBoardScreen> {
           _imageFile = null;
         });
         FocusScope.of(context).unfocus();
-
       } catch (e) {
         print('Error adding post: $e');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -140,18 +139,26 @@ class _BulletinBoardScreenState extends State<BulletinBoardScreen> {
 
   Widget _buildPostList() {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('posts') // Update with your actual collection name
-          .snapshots(),
+      stream: FirebaseFirestore.instance.collection('posts').snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return Center(
+            child: Text(
+              'Error: ${snapshot.error}',
+              style: const TextStyle(fontFamily: 'Gugi'),
+            ),
+          );
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text('No posts available.'));
+          return const Center(
+            child: Text(
+              'No posts available.',
+              style: TextStyle(fontFamily: 'Gugi'),
+            ),
+          );
         }
 
         final posts = snapshot.data!.docs;
@@ -170,20 +177,26 @@ class _BulletinBoardScreenState extends State<BulletinBoardScreen> {
     return ListTile(
       leading: post['profileImagePath'] != null && post['profileImagePath'].isNotEmpty
           ? CircleAvatar(
-        backgroundImage: FileImage(File(post['profileImagePath'])), // Display the local image
+        backgroundImage: FileImage(File(post['profileImagePath'])),
       )
           : const CircleAvatar(
         child: Icon(Icons.person),
       ),
-      title: Text(post['username']),
+      title: Text(
+        post['username'],
+        style: const TextStyle(fontFamily: 'Gugi'),
+      ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(post['comment']),
+          Text(
+            post['comment'],
+            style: const TextStyle(fontFamily: 'Gugi'),
+          ),
           if (post['imageUrl'] != null && post['imageUrl'].isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
-              child: Image.file(File(post['imageUrl'])), // Display the local image
+              child: Image.file(File(post['imageUrl'])),
             ),
         ],
       ),
@@ -198,7 +211,7 @@ class _BulletinBoardScreenState extends State<BulletinBoardScreen> {
 
   Future<void> _deletePost(String postId) async {
     try {
-      await FirebaseFirestore.instance.collection('posts').doc(postId).delete(); // Ensure correct collection name
+      await FirebaseFirestore.instance.collection('posts').doc(postId).delete();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Post deleted successfully.')),
       );
@@ -210,4 +223,3 @@ class _BulletinBoardScreenState extends State<BulletinBoardScreen> {
     }
   }
 }
-
