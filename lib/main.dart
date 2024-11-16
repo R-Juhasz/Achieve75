@@ -1,6 +1,9 @@
+// main.dart
+
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -8,11 +11,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'firebase/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+import 'firebase/firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
-import 'screens/goal_setup_screen.dart';
 import 'screens/challenge_screen.dart';
 import 'screens/bulletin_board_screen.dart';
 import 'screens/picture_library_screen.dart';
@@ -100,8 +103,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Achieve75',
       debugShowCheckedModeBanner: false,
-      title: '75 Hard Challenge',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: Colors.black,
@@ -109,13 +112,14 @@ class MyApp extends StatelessWidget {
       ),
       home: _getHomePage(),
       routes: {
-        '/login': (context) => const LoginScreen(),
-        '/home': (context) => const HomeScreen(),
-        '/challenge': (context) => const ChallengeScreen(),
-        '/bulletinBoard': (context) => const BulletinBoardScreen(),
-        '/pictureLibrary': (context) => const PictureLibraryScreen(),
-        '/profile': (context) => ProfileScreen(),
-        '/weightTracker': (context) => const WeightTrackerScreen(),
+        LoginScreen.routeName: (context) => const LoginScreen(),
+        HomeScreen.routeName: (context) => const HomeScreen(),
+        ChallengeScreen.routeName: (context) => const ChallengeScreen(),
+        BulletinBoardScreen.routeName: (context) => const BulletinBoardScreen(),
+        PictureLibraryScreen.routeName: (context) => const PictureLibraryScreen(),
+        ProfileScreen.routeName: (context) => ProfileScreen(),
+        WeightTrackerScreen.routeName: (context) => const WeightTrackerScreen(),
+        // Add other routes here if necessary
       },
     );
   }
@@ -134,3 +138,5 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+
