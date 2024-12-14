@@ -12,6 +12,7 @@ In addition to the support notifications, the app will include personalized alar
 As the project evolves, I plan to introduce even more features to enhance the user experience. These may include progress tracking, community support options, and tailored recommendations based on individual performance.
 
 Overall, Achieve75 aims to empower users to not only complete the Hard 75 challenge but also to cultivate lasting habits that promote a healthier and more fulfilling lifestyle.
+(click images to see in view mode)
 
 
 ![loginscreen](https://github.com/user-attachments/assets/8968a700-8c20-4a98-a50f-cff05f779568)
