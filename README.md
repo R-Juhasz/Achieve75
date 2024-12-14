@@ -1,20 +1,23 @@
 Achieve75 🚀
-CURRENTLY DEVELOPING THE UI – EXPECT MORE UPDATES IN THE COMING DAYS AS WE PREP FOR GOOGLE PLAY RELEASE!
+CURRENTLY DEVELOPING THE UI
+EXPECT MORE UPDATES IN THE COMING DAYS AS WE PREP FOR GOOGLE PLAY RELEASE!
 Achieve75 is a Flutter-powered app designed to support individuals taking on the Hard 75 Challenge. This comprehensive tool is built to motivate, guide, and keep users accountable throughout their 75-day journey to self-discipline, fitness, and personal growth.
 
 Key Features 🌟
-Daily Notifications: Get regular motivational reminders to stay focused on your goals, celebrate milestones, and keep moving forward.
-Personalized Alarms: Set customizable alarms and reminders for workouts, water intake, and other challenge tasks to suit your schedule and lifestyle.
-Goal Tracking: Easily track your progress with interactive checkboxes for completing daily challenge goals, such as workouts, water intake, and progress photos.
-Dynamic UI: Intuitive and evolving user interface designed to inspire and make staying on track seamless.
-Future Enhancements 🔮
-As development continues, Achieve75 will introduce even more features to enrich the user experience:
+Daily Notifications: Receive motivational reminders to stay focused on your goals, celebrate milestones, and keep moving forward.
+Personalized Alarms: Set custom alarms for workouts, water intake, and other challenge tasks, tailored to your lifestyle and schedule.
+Workout API Integration: Access curated workout suggestions to enhance your fitness journey. Whether you’re a beginner or experienced, Achieve75 offers a variety of workout routines to match your goals.
+Goal Tracking: Monitor your progress with interactive checkboxes for daily goals like workouts, water intake, and progress photos.
+Dynamic UI: A visually appealing and user-friendly interface designed to inspire and make tracking seamless.
+Upcoming Enhancements 🔮
+As development continues, Achieve75 will include even more exciting features to enrich your experience:
 
-Progress Tracking: Visualize your journey with detailed graphs and charts.
-Community Support: Connect with other users through forums and shared leaderboards.
-Tailored Insights: Receive customized recommendations and encouragement based on your performance.
-Mission 🎯
-Achieve75 isn’t just an app – it’s a lifestyle companion. The goal is to empower users to complete the Hard 75 challenge while building habits that last a lifetime. Whether it’s achieving your fitness goals, improving self-discipline, or simply fostering a healthier lifestyle, Achieve75 is here to help you succeed.
+Progress Tracking: Gain insights into your journey with visual charts and graphs.
+Community Support: Engage with others on the same challenge through forums and shared leaderboards.
+Advanced Workouts: Leverage enhanced API integrations for tailored workout plans based on your preferences and progress.
+Custom Recommendations: Receive personalized insights and motivation based on your performance.
+Our Mission 🎯
+Achieve75 isn’t just an app – it’s your companion for success. Our mission is to empower you to complete the Hard 75 challenge while cultivating lifelong habits. Whether it’s achieving fitness goals, building discipline, or adopting a healthier lifestyle, Achieve75 is here to help you thrive.
 
 Click images to view in full resolution!
 
