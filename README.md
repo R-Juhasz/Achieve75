@@ -18,7 +18,6 @@ Overall, Achieve75 aims to empower users to not only complete the Hard 75 challe
 ![home](https://github.com/user-attachments/assets/eaf9096d-b71b-4850-b258-c063db4926f5)
 ![profile](https://github.com/user-attachments/assets/6fcaa259-29ad-4fd0-b525-fab3cceb85ee)
 ![goal1](https://github.com/user-attachments/assets/9e3270b1-eb45-4b3c-825b-bc24a057ead8)
-![Screenshot_20241211_200744](https://github.com/user-attachments/assets/64fd0cfc-65b0-4b5a-9a7d-b803e7fa9d8f)
 ![goal3](https://github.com/user-attachments/assets/0158bc39-5750-469b-94f5-85e868a35f9c)
 ![goal4](https://github.com/user-attachments/assets/49616892-434e-4d40-917f-46da4cbc2dd8
 ![goal5](https://github.com/user-attachments/assets/e22ecb68-5e0c-4ac3-86c0-1941701db30c)
