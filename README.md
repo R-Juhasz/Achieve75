@@ -1,19 +1,22 @@
-CURRENTLY FLESHING OUT THE UI MORE UPDATES TO COME IN THE NEXT FEW DAYS THEN PREP FOR RELEASE TO GOOGLE PLAY
+Achieve75 🚀
+CURRENTLY DEVELOPING THE UI – EXPECT MORE UPDATES IN THE COMING DAYS AS WE PREP FOR GOOGLE PLAY RELEASE!
+Achieve75 is a Flutter-powered app designed to support individuals taking on the Hard 75 Challenge. This comprehensive tool is built to motivate, guide, and keep users accountable throughout their 75-day journey to self-discipline, fitness, and personal growth.
 
+Key Features 🌟
+Daily Notifications: Get regular motivational reminders to stay focused on your goals, celebrate milestones, and keep moving forward.
+Personalized Alarms: Set customizable alarms and reminders for workouts, water intake, and other challenge tasks to suit your schedule and lifestyle.
+Goal Tracking: Easily track your progress with interactive checkboxes for completing daily challenge goals, such as workouts, water intake, and progress photos.
+Dynamic UI: Intuitive and evolving user interface designed to inspire and make staying on track seamless.
+Future Enhancements 🔮
+As development continues, Achieve75 will introduce even more features to enrich the user experience:
 
+Progress Tracking: Visualize your journey with detailed graphs and charts.
+Community Support: Connect with other users through forums and shared leaderboards.
+Tailored Insights: Receive customized recommendations and encouragement based on your performance.
+Mission 🎯
+Achieve75 isn’t just an app – it’s a lifestyle companion. The goal is to empower users to complete the Hard 75 challenge while building habits that last a lifetime. Whether it’s achieving your fitness goals, improving self-discipline, or simply fostering a healthier lifestyle, Achieve75 is here to help you succeed.
 
-Achieve75
-I am currently developing a new Flutter project called "Achieve Seventy-Five," which is designed to support individuals undertaking the Hard 75 challenge. This application will serve as a comprehensive tool to help users successfully complete the challenge by offering a range of features aimed at enhancing motivation and accountability.
-
-One of the key aspects of the app is its regular notifications, which will provide users with moral support and encouragement throughout their journey. These notifications will remind users of their goals, celebrate their achievements, and offer motivational messages to keep them focused and engaged.
-
-In addition to the support notifications, the app will include personalized alarms and reminders for planning workouts and daily activities. Users can customize their notifications to suit their schedules and preferences, ensuring that they stay on track with their fitness routines and other challenge requirements.
-
-As the project evolves, I plan to introduce even more features to enhance the user experience. These may include progress tracking, community support options, and tailored recommendations based on individual performance.
-
-Overall, Achieve75 aims to empower users to not only complete the Hard 75 challenge but also to cultivate lasting habits that promote a healthier and more fulfilling lifestyle.
-(click images to see in view mode)
-
+Click images to view in full resolution!
 
 ![loginscreen](https://github.com/user-attachments/assets/8968a700-8c20-4a98-a50f-cff05f779568)
 ![home](https://github.com/user-attachments/assets/eaf9096d-b71b-4850-b258-c063db4926f5)
