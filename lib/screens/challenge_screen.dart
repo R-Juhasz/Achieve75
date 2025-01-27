@@ -34,7 +34,8 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
   Future<void> _loadState() async {
     final prefs = await SharedPreferences.getInstance();
 
-    String? startDateString = prefs.getString('startDate');
+    // Load or initialize the start date
+    final startDateString = prefs.getString('startDate');
     if (startDateString != null) {
       _startDate = DateTime.parse(startDateString);
     } else {
@@ -42,12 +43,70 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
       await prefs.setString('startDate', _startDate!.toIso8601String());
     }
 
+    // Calculate currentDay based on how many 24-hour blocks have elapsed
     _currentDay = _getCurrentDay();
     await prefs.setInt('currentDay', _currentDay);
+
     await _calculateProgress();
-    await _scheduleDailyAlarm(); // Schedule the end-of-day alarm at next midnight
+
+    // Schedule all fail alarms upfront (one per day, days 1..75)
+    await _scheduleAllDayFailAlarms();
+
     if (!mounted) return;
     setState(() {});
+  }
+
+  /// Loops through all 75 days and schedules an alarm for each day-end
+  /// so that the user fails automatically if they don't complete that day.
+  Future<void> _scheduleAllDayFailAlarms() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Cancel any old alarms first to avoid duplicates
+    for (int day = 1; day <= 75; day++) {
+      final oldAlarmId = 1000 + day;
+      await AndroidAlarmManager.cancel(oldAlarmId);
+      await prefs.remove('alarm_label_$oldAlarmId');
+    }
+
+    final now = DateTime.now();
+
+    // For each day 1..75, schedule an alarm if its 24-hour window hasn't ended
+    for (int day = 1; day <= 75; day++) {
+      // dayStart is the time this day began:
+      // e.g. if startDate is Jan1 2:00PM, Day1 = Jan1->Jan2, Day2 = Jan2->Jan3, etc.
+      final dayStart = _startDate!.add(Duration(days: day - 1));
+      final dayEnd = dayStart.add(const Duration(days: 1)); // 24 hours later
+
+      if (dayEnd.isBefore(now)) {
+        // If we've already passed dayEnd, do nothing (that day is in the past)
+        developer.log("Day $day ended at $dayEnd, which is already past. Skipping alarm.");
+        continue;
+      }
+
+      final alarmId = 1000 + day; // Unique alarm ID for each day
+      final initialDelay = dayEnd.difference(now);
+
+      // Schedule the day-failure check alarm
+      final scheduled = await AndroidAlarmManager.oneShot(
+        initialDelay,
+        alarmId,
+        alarmCallback, // This is the top-level function in main.dart
+        exact: true,
+        wakeup: true,
+        rescheduleOnReboot: true,
+      );
+
+      if (scheduled) {
+        // Label the alarm so alarmCallback knows it's an end-of-day
+        await prefs.setString('alarm_label_$alarmId', 'end_of_day');
+        developer.log(
+          "Scheduled fail alarm for Day $day to trigger in "
+              "${initialDelay.inHours}h (${dayEnd.toLocal()}). AlarmId=$alarmId",
+        );
+      } else {
+        developer.log("Failed scheduling alarm for Day $day (AlarmId=$alarmId).");
+      }
+    }
   }
 
   Future<void> _calculateProgress() async {
@@ -55,6 +114,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
     int completed = 0;
     int failed = 0;
 
+    // Count how many days are marked completed or failed so far
     for (int day = 1; day <= _currentDay; day++) {
       if (prefs.getBool(PreferencesHelper.completedKey(day)) == true) {
         completed++;
@@ -71,15 +131,19 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
     });
   }
 
+  /// Returns how many full 24-hour blocks have passed since _startDate
+  /// plus 1 => so day1 is from the moment you start until 24 hours later, day2 is the next 24 hours, etc.
   int _getCurrentDay() {
     final now = DateTime.now();
     final difference = now.difference(_startDate!).inDays + 1;
     return difference.clamp(1, 75);
   }
 
+  /// For the UI grid: load all days from prefs (1..75), see if each is completed/failed/pending
   Future<Map<int, String>> _loadChallengeProgress() async {
     final prefs = await SharedPreferences.getInstance();
-    Map<int, String> progress = {};
+    final Map<int, String> progress = {};
+
     for (int day = 1; day <= 75; day++) {
       if (prefs.getBool(PreferencesHelper.completedKey(day)) == true) {
         progress[day] = 'completed';
@@ -92,80 +156,35 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
     return progress;
   }
 
-  Future<void> _scheduleDailyAlarm() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    // Schedule the alarm to fire at the next midnight
-    final now = DateTime.now();
-    final nextMidnight = DateTime(now.year, now.month, now.day + 1, 0, 0, 0);
-    final Duration initialDelay = nextMidnight.difference(now);
-
-    // Unique alarmId for each day to prevent duplicates
-    final int alarmId = 1000 + _currentDay;
-
-    // Cancel existing alarm for the day to avoid duplicates
-    bool canceled = await AndroidAlarmManager.cancel(alarmId);
-    developer.log(canceled
-        ? 'Canceled existing alarm for Day $_currentDay with alarmId $alarmId'
-        : 'No existing alarm found for Day $_currentDay with alarmId $alarmId');
-
-    // Schedule the alarm
-    bool scheduled = await AndroidAlarmManager.oneShot(
-      initialDelay,
-      alarmId,
-      alarmCallback, // Top-level function in main.dart
-      exact: true,
-      wakeup: true,
-      rescheduleOnReboot: true,
-    );
-
-    if (scheduled) {
-      developer.log(
-        'Scheduled end-of-day alarm for Day $_currentDay to trigger at midnight with alarmId $alarmId',
-      );
-    } else {
-      developer.log(
-        'Failed to schedule end-of-day alarm for Day $_currentDay with alarmId $alarmId',
-      );
-    }
-
-    // Set the alarm label to 'end_of_day' in SharedPreferences
-    await prefs.setString('alarm_label_$alarmId', 'end_of_day');
-    developer.log('Set alarm_label_$alarmId to end_of_day');
-  }
-
-  // Function to reset the challenge (can be called from dialogs)
+  // Reset the entire challenge
   Future<void> _resetChallenge() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // Remove all saved days' progress
+    // Clear all completed/failed flags
     for (int day = 1; day <= 75; day++) {
       await prefs.remove(PreferencesHelper.completedKey(day));
       await prefs.remove(PreferencesHelper.failedKey(day));
-      // Remove other keys if necessary
     }
 
-    // Reset the start date to now
+    // Reset start date to now
     _startDate = DateTime.now();
     await prefs.setString('startDate', _startDate!.toIso8601String());
 
-    // Reset the current day to 1
+    // Reset day counters
     _currentDay = _getCurrentDay();
     await prefs.setInt('currentDay', _currentDay);
-
-    // Reset days completed and failed
     _daysCompleted = 0;
     _daysFailed = 0;
 
-    // Cancel any scheduled alarms
+    // Cancel all existing alarms
     await _cancelAllAlarms();
 
-    // Remove alarm-related SharedPreferences keys
+    // Remove alarm-related SharedPreferences keys for each day
     for (int alarmId = 1001; alarmId <= 1075; alarmId++) {
       await prefs.remove('alarm_label_$alarmId');
     }
 
-    // Show confirmation to the user
+    // Inform the user
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -177,27 +196,26 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
       ),
     );
 
-    // Reload state and reschedule the alarm
+    // Reload everything, which also reschedules new alarms
     await _loadState();
   }
 
-  // Function to cancel all alarms (used during reset)
+  // Cancel all day-failure alarms
   Future<void> _cancelAllAlarms() async {
-    // Assuming alarmIds are 1001 to 1075 for days 1 to 75
     for (int day = 1; day <= 75; day++) {
-      int alarmId = 1000 + day;
-      bool canceled = await AndroidAlarmManager.cancel(alarmId);
+      final alarmId = 1000 + day;
+      final canceled = await AndroidAlarmManager.cancel(alarmId);
       if (canceled) {
-        developer.log('Canceled alarm for Day $day');
+        developer.log('Canceled alarm for Day $day (alarmId=$alarmId)');
       } else {
-        developer.log('No alarm found to cancel for Day $day');
+        developer.log('No alarm found to cancel for Day $day (alarmId=$alarmId)');
       }
     }
   }
 
-  // Optional: Function to manually trigger the alarm for testing
+  // Optional: test an alarm callback manually
   Future<void> _manualTriggerAlarm() async {
-    final int alarmId = 1000 + _currentDay;
+    final alarmId = 1000 + _currentDay;
     developer.log('Manually triggering alarmCallback for alarmId $alarmId');
     await alarmCallback(alarmId);
   }
@@ -222,7 +240,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
           ),
           IconButton(
             icon: Icon(Icons.alarm, color: AppColors.primary),
-            onPressed: _manualTriggerAlarm, // For testing purposes
+            onPressed: _manualTriggerAlarm, // For testing
           ),
         ],
       ),
@@ -249,6 +267,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
 
           return Column(
             children: [
+              // Displays current day, days completed/failed, etc.
               ProgressSection(
                 currentDay: _currentDay,
                 daysCompleted: _daysCompleted,
@@ -294,19 +313,22 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
 
                     return GestureDetector(
                       onTap: (day <= _currentDay)
-                          ? () {
-                        Navigator.push(
+                          ? () async {
+                        // Open goals for that day
+                        final result = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => GoalSetupScreen(day: day),
                           ),
-                        ).then((result) async {
-                          if (result == true || result == false) {
-                            await _calculateProgress();
-                            if (!mounted) return;
-                            setState(() {});
-                          }
-                        });
+                        );
+
+                        // result == true => day completed
+                        // result == false => day failed
+                        if (result == true || result == false) {
+                          await _calculateProgress();
+                          if (!mounted) return;
+                          setState(() {});
+                        }
                       }
                           : null,
                       child: Container(
@@ -335,3 +357,4 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
     );
   }
 }
+
