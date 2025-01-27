@@ -1,5 +1,3 @@
-// lib/screens/challenge_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,7 +45,6 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
     _currentDay = _getCurrentDay();
     await prefs.setInt('currentDay', _currentDay);
     await _calculateProgress();
-    await _scheduleDailyAlarm(); // Schedule the daily alarm after loading state
     if (!mounted) return;
     setState(() {});
   }
@@ -97,8 +94,6 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
   Future<void> _scheduleDailyAlarm() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // For testing purposes, set the alarm to trigger after 2 minutes
-    final Duration initialDelay = Duration(minutes: 2);
 
     // Unique alarmId for each day to prevent duplicates
     final int alarmId = 1000 + _currentDay;
@@ -121,9 +116,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
 
     if (scheduled) {
       developer.log(
-          'Scheduled end-of-day alarm for Day $_currentDay to trigger in 2 minutes with alarmId $alarmId');
     } else {
-      developer.log('Failed to schedule end-of-day alarm for Day $_currentDay with alarmId $alarmId');
     }
 
     // Set the alarm label to 'end_of_day' in SharedPreferences
@@ -332,4 +325,3 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
     );
   }
 }
-

@@ -1,5 +1,3 @@
-// lib/notifications/notifications.dart
-
 import 'dart:developer' as developer;
 import 'dart:typed_data'; // For vibration pattern
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -7,7 +5,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart'; // Ensure time zones are initialized
 import 'package:shared_preferences/shared_preferences.dart';
-import '../utils/preferences_helper.dart';
 import 'package:flutter/material.dart';
 
 class NotificationService {
@@ -180,7 +177,6 @@ class NotificationService {
           importance: Importance.high,
           priority: Priority.high,
           playSound: true,
-          // sound: const RawResourceAndroidNotificationSound('alarm_sound'), // Uncomment if you have a custom sound
           enableVibration: true,
           vibrationPattern: Int64List.fromList([0, 1000, 500, 1000]),
         ),
@@ -214,7 +210,6 @@ class NotificationReminders {
     // No need to request permissions here; it should be done in main()
     await _notificationService.init();
     await scheduleDailyNotifications();
-    await _scheduleIncompleteGoalCheck(); // Call the method here
   }
 
   // Expose the immediate test notification
@@ -227,14 +222,9 @@ class NotificationReminders {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
 
     // Define the hours at which notifications should be sent
-    List<int> notificationHours = [
-      8, 10, 12, 14, 16, 18, 20, 22
-    ]; // Every 2 hours from 8 AM to 10 PM
-
     int notificationId = 1; // Start IDs from 1
 
     for (int hour in notificationHours) {
-      tz.TZDateTime scheduledTime = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour);
 
       // If the scheduled time is before now, schedule for the next day
       if (scheduledTime.isBefore(now)) {
@@ -247,14 +237,12 @@ class NotificationReminders {
         notificationId,
       );
       developer.log(
-          'Scheduled motivational notification "${_messages[notificationId % _messages.length]}" at ${scheduledTime.toLocal()} with ID $notificationId');
       notificationId++;
     }
   }
 
   // Schedule motivational notifications
   Future<void> _scheduleMotivationalNotification(
-      String message, tz.TZDateTime scheduledTime, int id) async {
     try {
       await _notificationService.flutterLocalNotificationsPlugin.zonedSchedule(
         id,
@@ -270,15 +258,10 @@ class NotificationReminders {
             priority: Priority.high,
           ),
         ),
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        matchDateTimeComponents:
-        DateTimeComponents.time, // Repeat daily at the same time
       );
       developer.log('Scheduled motivational notification with ID $id');
     } catch (e, stackTrace) {
-      developer.log('Error scheduling notification: $e',
-          error: e, stackTrace: stackTrace);
     }
   }
 
@@ -289,7 +272,6 @@ class NotificationReminders {
     tz.TZDateTime(tz.local, now.year, now.month, now.day, 23, 0, 0); // 11:00 PM
 
     if (scheduledTime.isBefore(now)) {
-      // Schedule for the next day
       scheduledTime = scheduledTime.add(const Duration(days: 1));
     }
 
@@ -308,34 +290,23 @@ class NotificationReminders {
             priority: Priority.high,
           ),
         ),
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        matchDateTimeComponents:
-        DateTimeComponents.time, // Repeat daily at the same time
       );
       developer.log(
-          'Scheduled daily goal check notification at ${scheduledTime.toLocal()} with ID 100');
     } catch (e, stackTrace) {
-      developer.log('Error scheduling daily goal check notification: $e',
-          error: e, stackTrace: stackTrace);
     }
   }
 
-  // Check incomplete goals and notify the user
   Future<void> checkIncompleteGoals() async {
     final prefs = await SharedPreferences.getInstance();
-
     // Retrieve the current day
     final int currentDay = prefs.getInt('currentDay') ?? 1;
-
     // Check if the goals for the current day are completed
-    bool goalsCompleted = prefs.getBool(PreferencesHelper.completedKey(currentDay)) ?? false;
 
     if (!goalsCompleted) {
       await _notificationService.showIncompleteGoalsNotification(currentDay);
     } else {
       developer.log(
-          'All goals completed for Day $currentDay. No incomplete goals notification displayed.');
     }
   }
 }
@@ -366,8 +337,6 @@ class NotificationsCallbackHandler {
         return;
       }
 
-      final bool isCompleted = prefs.getBool(PreferencesHelper.completedKey(day)) ?? false;
-      final bool isFailed = prefs.getBool(PreferencesHelper.failedKey(day)) ?? false;
       developer.log('Day $day - Completed: $isCompleted, Failed: $isFailed');
 
       if (!isCompleted && !isFailed) {
@@ -398,7 +367,6 @@ class NotificationsCallbackHandler {
       }
     }
   }
-}
 
 
 

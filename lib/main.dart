@@ -54,8 +54,6 @@ Future<void> main() async {
   final notificationReminders = NotificationReminders();
   await notificationReminders.initReminders();
 
-  // Display immediate test notification using the new method
-  await notificationReminders.showImmediateTestNotification();
 
   runApp(
     MultiProvider(
