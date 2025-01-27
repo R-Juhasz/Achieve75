@@ -7,6 +7,11 @@ import 'package:timezone/data/latest.dart'; // Ensure time zones are initialized
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 
+// NEW: Import for AndroidAlarmManager
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+
+import '../utils/preferences_helper.dart';
+
 class NotificationService {
   // Singleton instance
   static final NotificationService _notificationService = NotificationService._internal();
@@ -189,6 +194,23 @@ class NotificationService {
     // Handle notification tapped logic here
     developer.log('Notification with payload ${response.payload} tapped.');
   }
+
+  /// Helper to create standard AndroidNotificationDetails quickly
+  NotificationDetails createDetails({
+    required String channelId,
+    required String channelName,
+    required String channelDescription,
+  }) {
+    return NotificationDetails(
+      android: AndroidNotificationDetails(
+        channelId,
+        channelName,
+        channelDescription: channelDescription,
+        importance: Importance.max,
+        priority: Priority.high,
+      ),
+    );
+  }
 }
 
 // NotificationReminders Class
@@ -210,6 +232,10 @@ class NotificationReminders {
     // No need to request permissions here; it should be done in main()
     await _notificationService.init();
     await scheduleDailyNotifications();
+    await _scheduleIncompleteGoalCheck();
+
+    // NEW: Schedule daily “confidence booster” alarms
+    await scheduleConfidenceBoosterAlarms();
   }
 
   // Expose the immediate test notification
@@ -222,9 +248,12 @@ class NotificationReminders {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
 
     // Define the hours at which notifications should be sent
+    List<int> notificationHours = [8, 10, 12, 14, 16, 18, 20, 22];
     int notificationId = 1; // Start IDs from 1
 
     for (int hour in notificationHours) {
+      tz.TZDateTime scheduledTime =
+      tz.TZDateTime(tz.local, now.year, now.month, now.day, hour);
 
       // If the scheduled time is before now, schedule for the next day
       if (scheduledTime.isBefore(now)) {
@@ -237,12 +266,18 @@ class NotificationReminders {
         notificationId,
       );
       developer.log(
+        'Scheduled motivational notification "${_messages[notificationId % _messages.length]}" at ${scheduledTime.toLocal()} with ID $notificationId',
+      );
       notificationId++;
     }
   }
 
   // Schedule motivational notifications
   Future<void> _scheduleMotivationalNotification(
+      String message,
+      tz.TZDateTime scheduledTime,
+      int id,
+      ) async {
     try {
       await _notificationService.flutterLocalNotificationsPlugin.zonedSchedule(
         id,
@@ -258,10 +293,18 @@ class NotificationReminders {
             priority: Priority.high,
           ),
         ),
+        uiLocalNotificationDateInterpretation:
+        UILocalNotificationDateInterpretation.absoluteTime,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
       );
       developer.log('Scheduled motivational notification with ID $id');
     } catch (e, stackTrace) {
+      developer.log(
+        'Error scheduling notification: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -290,23 +333,82 @@ class NotificationReminders {
             priority: Priority.high,
           ),
         ),
+        uiLocalNotificationDateInterpretation:
+        UILocalNotificationDateInterpretation.absoluteTime,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
       );
       developer.log(
+        'Scheduled daily goal check notification at ${scheduledTime.toLocal()} with ID 100',
+      );
     } catch (e, stackTrace) {
+      developer.log(
+        'Error scheduling daily goal check notification: $e',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
+  // Check incomplete goals and notify the user (called at 11pm)
   Future<void> checkIncompleteGoals() async {
     final prefs = await SharedPreferences.getInstance();
     // Retrieve the current day
     final int currentDay = prefs.getInt('currentDay') ?? 1;
     // Check if the goals for the current day are completed
+    bool goalsCompleted =
+        prefs.getBool(PreferencesHelper.completedKey(currentDay)) ?? false;
 
     if (!goalsCompleted) {
       await _notificationService.showIncompleteGoalsNotification(currentDay);
     } else {
       developer.log(
+        'All goals completed for Day $currentDay. No incomplete goals notification displayed.',
+      );
+    }
+  }
+
+  // NEW: schedule “confidence booster” alarms via AndroidAlarmManager
+  //      (to dynamically check partial progress multiple times a day)
+  Future<void> scheduleConfidenceBoosterAlarms() async {
+    // Times of day for booster checks (24-hour format)
+    final List<int> boosterHours = [11, 12, 16, 20]; // e.g. 11am, 12pm, 4pm, 8pm
+
+    // For each time, schedule a one-shot alarm that calls the callback
+    for (int i = 0; i < boosterHours.length; i++) {
+      final hour = boosterHours[i];
+      final now = DateTime.now();
+      DateTime scheduleTime = DateTime(now.year, now.month, now.day, hour, 0);
+
+      if (scheduleTime.isBefore(now)) {
+        scheduleTime = scheduleTime.add(const Duration(days: 1));
+      }
+
+      final Duration initialDelay = scheduleTime.difference(now);
+      // alarmId can be anything, just keep it unique
+      final alarmId = 200 + i;
+
+      // Cancel any existing alarm for that ID
+      await AndroidAlarmManager.cancel(alarmId);
+
+      final scheduled = await AndroidAlarmManager.oneShot(
+        initialDelay,
+        alarmId,
+        NotificationsCallbackHandler.confidenceBoosterCallback,
+        exact: true,
+        wakeup: true,
+        rescheduleOnReboot: true,
+      );
+
+      if (scheduled) {
+        developer.log(
+          'Scheduled confidence booster alarm for ${scheduleTime.toLocal()} with alarmId $alarmId',
+        );
+      } else {
+        developer.log(
+          'Failed to schedule confidence booster alarm for hour $hour at alarmId $alarmId',
+        );
+      }
     }
   }
 }
@@ -337,6 +439,10 @@ class NotificationsCallbackHandler {
         return;
       }
 
+      final bool isCompleted =
+          prefs.getBool(PreferencesHelper.completedKey(day)) ?? false;
+      final bool isFailed =
+          prefs.getBool(PreferencesHelper.failedKey(day)) ?? false;
       developer.log('Day $day - Completed: $isCompleted, Failed: $isFailed');
 
       if (!isCompleted && !isFailed) {
@@ -368,7 +474,51 @@ class NotificationsCallbackHandler {
     }
   }
 
+  // NEW: a callback to check partial progress multiple times a day
+  @pragma('vm:entry-point')
+  static Future<void> confidenceBoosterCallback() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    developer.log('confidenceBoosterCallback triggered');
 
+    final prefs = await SharedPreferences.getInstance();
+    final currentDay = prefs.getInt('currentDay') ?? 1;
+
+    // Count how many of the 6 daily goals are completed
+    int completedGoals = 0;
+
+    if (prefs.getBool('day_${currentDay}_water_goal') ?? false) completedGoals++;
+    if (prefs.getBool('day_${currentDay}_reading_goal') ?? false) completedGoals++;
+    if (prefs.getBool('day_${currentDay}_diet_goal') ?? false) completedGoals++;
+    if (prefs.getBool('day_${currentDay}_photo_goal') ?? false) completedGoals++;
+    if (prefs.getBool('day_${currentDay}_inside_workout_goal') ?? false) completedGoals++;
+    if (prefs.getBool('day_${currentDay}_outside_workout_goal') ?? false) completedGoals++;
+
+    // Initialize NotificationService without requesting permissions
+    final notificationService = NotificationService();
+    await notificationService.init(requestPermissions: false);
+
+    // Decide which “confidence booster” or “well done” message to show
+    if (completedGoals == 0) {
+      // Very slow start
+      await notificationService.showMotivationalNotification(
+        201,
+        "I see you have had a slow start, let's get some goals completed!",
+      );
+    } else if (completedGoals < 6) {
+      // Partial progress
+      await notificationService.showMotivationalNotification(
+        202,
+        "You're doing well! You've completed $completedGoals of 6 so far. Keep going!",
+      );
+    } else {
+      // All 6 done
+      await notificationService.showMotivationalNotification(
+        203,
+        "Well done! You've completed all your goals for today!",
+      );
+    }
+  }
+}
 
 
 

@@ -45,6 +45,7 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
     _currentDay = _getCurrentDay();
     await prefs.setInt('currentDay', _currentDay);
     await _calculateProgress();
+    await _scheduleDailyAlarm(); // Schedule the end-of-day alarm at next midnight
     if (!mounted) return;
     setState(() {});
   }
@@ -94,6 +95,10 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
   Future<void> _scheduleDailyAlarm() async {
     final prefs = await SharedPreferences.getInstance();
 
+    // Schedule the alarm to fire at the next midnight
+    final now = DateTime.now();
+    final nextMidnight = DateTime(now.year, now.month, now.day + 1, 0, 0, 0);
+    final Duration initialDelay = nextMidnight.difference(now);
 
     // Unique alarmId for each day to prevent duplicates
     final int alarmId = 1000 + _currentDay;
@@ -116,7 +121,12 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
 
     if (scheduled) {
       developer.log(
+        'Scheduled end-of-day alarm for Day $_currentDay to trigger at midnight with alarmId $alarmId',
+      );
     } else {
+      developer.log(
+        'Failed to schedule end-of-day alarm for Day $_currentDay with alarmId $alarmId',
+      );
     }
 
     // Set the alarm label to 'end_of_day' in SharedPreferences
