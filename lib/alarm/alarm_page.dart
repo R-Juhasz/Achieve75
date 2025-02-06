@@ -1,11 +1,9 @@
-// lib/alarm/alarm_page.dart
-
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart'; // For alarmCallback
-import '../styles/styles.dart'; // Import styles
+import '../styles/styles.dart';
 
 class AlarmPage extends StatefulWidget {
   final String alarmLabel;
@@ -42,10 +40,10 @@ class AlarmPageState extends State<AlarmPage> {
     await prefs.setInt('alarm_hour_$alarmId', time.hour);
     await prefs.setInt('alarm_minute_$alarmId', time.minute);
 
-    // Cancel existing alarm
+    // Cancel any existing alarm
     await AndroidAlarmManager.cancel(alarmId);
 
-    // Schedule new alarm
+    // Schedule the new alarm
     bool alarmScheduled = await AndroidAlarmManager.oneShot(
       durationUntilAlarm,
       alarmId,
@@ -59,12 +57,10 @@ class AlarmPageState extends State<AlarmPage> {
       setState(() {
         _selectedTime = time;
       });
-      // Return true indicating success
-      Navigator.pop(context, true);
+      Navigator.pop(context, true); // Indicate success
     } else {
       developer.log('Failed to schedule alarm');
-      // Return false indicating failure
-      Navigator.pop(context, false);
+      Navigator.pop(context, false); // Indicate failure
     }
   }
 
@@ -76,11 +72,11 @@ class AlarmPageState extends State<AlarmPage> {
         return Theme(
           data: ThemeData(
             colorScheme: ColorScheme.light(
-              primary: AppColors.primary, // Header background color
-              onPrimary: AppColors.background, // Header text color
-              onSurface: AppColors.text, // Body text color
+              primary: AppColors.primary,
+              onPrimary: AppColors.background,
+              onSurface: AppColors.text,
             ),
-            dialogBackgroundColor: AppColors.cardBackground, // Dialog background color
+            dialogBackgroundColor: AppColors.cardBackground,
           ),
           child: child ?? Container(),
         );
@@ -90,7 +86,6 @@ class AlarmPageState extends State<AlarmPage> {
     if (picked != null) {
       await _setAlarm(picked);
     } else {
-      // User canceled the picker, return false
       Navigator.pop(context, false);
     }
   }
@@ -98,7 +93,7 @@ class AlarmPageState extends State<AlarmPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Use a gradient background for a modern look
+      // Gradient background for a modern look
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -120,26 +115,25 @@ class AlarmPageState extends State<AlarmPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Alarm Icon
                   Icon(
                     Icons.alarm,
                     size: 60,
                     color: AppColors.primary,
                   ),
                   const SizedBox(height: 20),
-                  // Alarm Label
                   Text(
                     widget.alarmLabel,
                     style: AppTextStyles.dialogTitle,
                   ),
                   const SizedBox(height: 30),
-                  // Display Alarm Time
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         _selectedTime != null ? Icons.alarm_on : Icons.alarm_off,
-                        color: _selectedTime != null ? AppColors.completedGreen : AppColors.error,
+                        color: _selectedTime != null
+                            ? AppColors.completedGreen
+                            : AppColors.error,
                         size: 30,
                       ),
                       const SizedBox(width: 10),
@@ -152,7 +146,6 @@ class AlarmPageState extends State<AlarmPage> {
                     ],
                   ),
                   const SizedBox(height: 30),
-                  // Set Alarm Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -178,5 +171,4 @@ class AlarmPageState extends State<AlarmPage> {
     );
   }
 }
-
 

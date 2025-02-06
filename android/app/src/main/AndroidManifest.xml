@@ -1,28 +1,26 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Permissions -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <!-- Removed duplicate SCHEDULE_EXACT_ALARM -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
     <application
-
             android:label="Achieve75"
             android:icon="@mipmap/ic_launcher"
-            android:name="${applicationName}">
+            android:theme="@style/LaunchTheme">
 
         <!-- Main Activity -->
+        <!-- Using ".MainActivity" tells Android to use the MainActivity in the namespace defined in Gradle -->
         <activity
                 android:name=".MainActivity"
                 android:exported="true"
@@ -47,7 +45,7 @@
                 android:name="flutterEmbedding"
                 android:value="2" />
 
-        <!-- Service for handling notifications (Replace with your actual package) -->
+        <!-- Notification Service -->
         <service android:name="me.carda.awesome_notifications.notifications.receivers.ActionReceiver" />
 
         <!-- Alarm Manager service -->
@@ -61,7 +59,7 @@
                 android:name="dev.fluttercommunity.plus.androidalarmmanager.AlarmBroadcastReceiver"
                 android:exported="false"/>
 
-        <!-- Reboot Receiver to restart alarms after device reboot -->
+        <!-- Reboot Receiver -->
         <receiver
                 android:name="dev.fluttercommunity.plus.androidalarmmanager.RebootBroadcastReceiver"
                 android:enabled="false"
@@ -72,7 +70,6 @@
         </receiver>
     </application>
 
-    <!-- Required to query activities that can process text -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
@@ -80,4 +77,3 @@
         </intent>
     </queries>
 </manifest>
-
